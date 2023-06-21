@@ -1,0 +1,250 @@
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.HtmlControls;
+using System.Web.UI.WebControls;
+
+namespace LaHerradura.Back
+{
+    public partial class EnvioComprobantes : System.Web.UI.Page
+    {
+        int i = 0;
+        DateTime fecha = DateTime.Now;
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                DAL.USUARIOS obj =
+DAL.USUARIOS.getByPk(Convert.ToInt32(Request.Cookies["UserLh"]["Id"]));
+                if (obj.ROL == 3)
+                {
+                    Response.Redirect("home.aspx");
+                }
+                if (!IsPostBack)
+                {
+                    fillComprobantes();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
+        private void fillComprobantes()
+        {
+            try
+            {
+                List<DAL.ENVIO_COMPROBANTES> lstCtas = DAL.ENVIO_COMPROBANTES.readNoEnviados();
+                gvCtaCte.DataSource = lstCtas;
+                gvCtaCte.DataBind();
+                chkSelect_CheckedChanged(null, null);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        protected void gvCtaCte_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            try
+            {
+                if (e.Row.RowType == DataControlRowType.DataRow)
+                {
+                    DAL.ENVIO_COMPROBANTES obj = (DAL.ENVIO_COMPROBANTES)e.Row.DataItem;
+                    HtmlGenericControl divPeriodo =
+                        (HtmlGenericControl)e.Row.FindControl("divPeriodo");
+                    HtmlGenericControl divDet =
+                        (HtmlGenericControl)e.Row.FindControl("divDet");
+                    List<DAL.PAGOS_X_FACTURA> lstPagos = DAL.PAGOS_X_FACTURA.read(obj.NRO_RECIBO_PAGO);
+                    List<DAL.CTACTE_EXPENSAS> lstCta = DAL.CTACTE_EXPENSAS.getByRecibo2(obj.NRO_RECIBO_PAGO);
+                    List<DAL.PERSONAS_GRILLA> lstPer = DAL.PERSONAS_GRILLA.getByNroCta(lstCta[0].NRO_CTA);
+
+
+                    if (i == 0)
+                    {
+                        fecha = lstCta[0].FECHA;
+                    }
+                    i++;
+                    string propietarios = string.Empty;
+                    string cuitPer = string.Empty;
+                    foreach (var item in lstPer)
+                    {
+                        if (item.RESPONSABLE_FACTURACION)
+                        {
+                            propietarios += string.Format("{0}, ", item.NOMBRE);
+                            cuitPer = item.CUIT;
+                        }
+                    }
+                    foreach (var item in lstPer)
+                    {
+                        if (item.RELACION == "Inquilino")
+                        {
+                            propietarios += string.Format("(Inquilinos: {0}), ", item.NOMBRE);
+                        }
+                    }
+                    lblTitulo.InnerHtml = string.Format("{0} Comprobantes a enviar por pagos acentados entre el {1} y el {2}",
+                        i,
+                        fecha.ToShortDateString(),
+                        lstCta[0].FECHA.ToShortDateString());
+                    StringBuilder html = new StringBuilder();
+                    html.AppendLine("<div class=\"box-header\">");
+                    html.AppendLine(string.Format("<h3 class=\"box-title\">Recibo Nro: {0} - Fecha: {1} - Cuenta Nro: {2} - {3}</h3>",
+                        lstCta[0].NRO_RECIBO_PAGO,
+                        lstCta[0].FECHA.ToShortDateString(),
+                        lstCta[0].NRO_CTA,
+                        propietarios.Substring(0, propietarios.Length - 2)));
+                    html.AppendLine(string.Format("<strong style=\"font-size: 18px;\" class=\"pull-right\">{0:c}</strong>",
+                        lstCta.Sum(c => c.HABER)));
+                    html.AppendLine("</div>");
+
+                    html.AppendLine("<div class=\"col-md-6\">");
+                    html.AppendLine("<div class=\"box box-default\" style=\"box-shadow: 0 1px 5px 2px rgba(0,0,0,0.1);\">");
+                    html.AppendLine("<div class=\"box-header\">");
+                    html.AppendLine("<h3 class=\"box-title\">Expensas cubiertas</h3>");
+                    html.AppendLine("</div>");
+                    html.AppendLine("<ul class=\"nav nav-stacked\">");
+                    foreach (var item in lstCta)
+                    {
+                        html.AppendLine(string.Format(
+                            "<li><a href=\"#\">{0}<span class=\"pull-right\">{1:c}</span></a></li>",
+                            item.PERIODOMAQUILLADO, item.HABER));
+                    }
+                    html.AppendLine("</ul>");
+                    html.AppendLine("</div>");
+                    html.AppendLine("</div>");
+                    html.AppendLine("<div class=\"col-md-6\">");
+                    html.AppendLine("<div class=\"box box-default\" style=\"box-shadow: 0 1px 5px 2px rgba(0,0,0,0.1);\">");
+                    html.AppendLine("<div class=\"box-header\">");
+                    html.AppendLine("<h3 class=\"box-title\">Forma de pago</h3>");
+                    html.AppendLine("</div>");
+                    html.AppendLine("<ul class=\"nav nav-stacked\">");
+                    foreach (var item in lstPagos)
+                    {
+                        html.AppendLine(string.Format(
+                            "<li><a href=\"#\">{0} {1} {2}<span class=\"pull-right\">{3:c}</span></a></li>",
+                            item.MEDIO_PAGO, item.BANCO, item.NRO_CHEQUE, item.MONTO));
+                    }
+                    html.AppendLine("</ul>");
+                    html.AppendLine("</div>");
+                    html.AppendLine("</div>");
+                    divDet.InnerHtml = html.ToString();
+                }
+
+                /*                                        <hr style="margin-top: 5px; margin-bottom: 5px; border-top: 1px solid #d2cfcf;" />
+*/
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        protected void chkSelect_CheckedChanged(object sender, EventArgs e)
+        {
+            List<DAL.CTACTE_EXPENSAS> lst = new List<DAL.CTACTE_EXPENSAS>();
+            DAL.CTACTE_EXPENSAS obj;
+            for (int i = 0; i < gvCtaCte.Rows.Count; i++)
+            {
+                GridViewRow row = gvCtaCte.Rows[i];
+                CheckBox chk = (CheckBox)row.FindControl("chkSelect");
+                bool isChecked = chk.Checked;
+                if (isChecked)
+                {
+                    int nroCta = Convert.ToInt32(gvCtaCte.DataKeys[i].Values["NRO_RECIBO_PAGO"].ToString());
+                    obj = DAL.CTACTE_EXPENSAS.getByRecibo2(nroCta)[0];
+                    lst.Add(obj);
+                }
+            }
+            gvConfirmoEnvios.DataSource = lst;
+            gvConfirmoEnvios.DataBind();
+            lblCantComp.InnerHtml = string.Format("¿Esta seguro de enviar {0} comprobantes por mail?",
+                lst.Count);
+        }
+        private List<DAL.CTACTE_EXPENSAS> leerGrilla()
+        {
+            List<DAL.CTACTE_EXPENSAS> lst = new List<DAL.CTACTE_EXPENSAS>();
+            for (int i = 0; i < gvConfirmoEnvios.Rows.Count; i++)
+            {
+                GridViewRow row = gvConfirmoEnvios.Rows[i];
+                DAL.CTACTE_EXPENSAS obj = DAL.CTACTE_EXPENSAS.getByPk(
+                    int.Parse(gvConfirmoEnvios.DataKeys[i].Values["ID"].ToString()));
+                lst.Add(obj);
+            }
+            return lst;
+        }
+        protected void btnEnvioMail_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                List<DAL.CTACTE_EXPENSAS> lst = leerGrilla();
+                foreach (var item in lst)
+                {
+                    List<DAL.PERSONAS_GRILLA> lstPer =
+                        DAL.PERSONAS_GRILLA.getByNroCta(item.NRO_CTA);
+                    string propietarios = string.Empty;
+                    foreach (var item2 in lstPer)
+                    {
+                        if (item2.RESPONSABLE_FACTURACION)
+                        {
+                            propietarios += string.Format("{0}, ", item2.NOMBRE);
+                        }
+                    }
+                    List<string> lstMail = new List<string>();
+                    List<DAL.MAIL_X_CTAS> ls = DAL.MAIL_X_CTAS.getByCta(item.NRO_CTA);
+                    foreach (var item2 in ls)
+                    {
+                        lstMail.Add(item2.MAIL);
+                        //lstMail.Add("allcompva@gmail.com");
+                    }
+                    List<DAL.CTACTE_EXPENSAS> lstCtas = DAL.CTACTE_EXPENSAS.getByRecibo2(item.NRO_RECIBO_PAGO);
+                    Back.mail.reciboPago(lstMail, propietarios,
+                    item.FECHA, lstCtas.Sum(c => c.HABER), item.NRO_RECIBO_PAGO);
+
+                    DAL.ENVIO_COMPROBANTES obj = new DAL.ENVIO_COMPROBANTES
+                    {
+                        FECHA_ENVIO = DateTime.Now,
+                        MAILS = JsonConvert.SerializeObject(lstMail),
+                        NRO_CTA = item.NRO_CTA,
+                        NRO_RECIBO_PAGO = item.NRO_RECIBO_PAGO,
+                        USUARIO_ENVIO = 1
+                    };
+                    DAL.ENVIO_COMPROBANTES.insert(obj);
+                    fillComprobantes();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        protected void gvCtaCte_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            try
+            {
+                int rowIndex = int.Parse(e.CommandArgument.ToString());
+                int nroRecibo = (int)this.gvCtaCte.DataKeys[rowIndex]["NRO_RECIBO_PAGO"];
+                int nroCta = (int)this.gvCtaCte.DataKeys[rowIndex]["NRO_CTA"];
+                DAL.ENVIO_COMPROBANTES obj = new DAL.ENVIO_COMPROBANTES
+                {
+                    FECHA_ENVIO = DateTime.Now,
+                    MAILS = string.Empty,
+                    NRO_CTA = nroCta,
+                    NRO_RECIBO_PAGO = nroRecibo,
+                    USUARIO_ENVIO = 1
+                };
+                DAL.ENVIO_COMPROBANTES.insert(obj);
+                fillComprobantes();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

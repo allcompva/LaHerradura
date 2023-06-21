@@ -1,0 +1,156 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Web;
+
+namespace LaHerradura.Banelco
+{
+    public class ArchivoFacturacion
+    {
+        public static string crear(int periodo)
+        {
+            try
+            {
+                DateTime fec = LaHerradura.Utils.Utils.getFechaActual();
+                StringBuilder txt = new StringBuilder();
+                //HEADER
+                txt.AppendLine(string.Format("04003120{0}{1}{2}",
+                fec.Year,
+                fec.Month.ToString().PadLeft(2, Convert.ToChar("0")),
+                fec.Day.ToString().PadLeft(2, Convert.ToChar("0"))).
+                PadRight(200, Convert.ToChar("0")));
+                List<DAL.Banelco> lst = DAL.Banelco.read(periodo);
+                foreach (var item in lst)
+                {
+                    StringBuilder txtDet = new StringBuilder();
+                    //1. Código de Registro N(01) 001	001
+                    txtDet.Append("5");
+                    //2. Nro.Referencia	AN(19)	002	020
+                    txtDet.Append(item.NRO_CTA.ToString().PadRight(19, Convert.ToChar(" ")));
+                    //3. Identificación de Factura AN(20)	021 040
+                    txtDet.Append(string.Format("{0}-{1}",
+                        item.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                        item.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0"))).PadRight(20, Convert.ToChar(" ")));
+                    //4. Codigo Moneda   N(01)   041 041
+                    txtDet.Append("0");
+                    //5. Fecha 1er.Vto.N(08)   042 049
+                    txtDet.Append(string.Format("{0}{1}{2}",
+                        item.VENC1.Year,
+                        item.VENC1.Month.ToString().PadLeft(2, Convert.ToChar("0")),
+                        item.VENC1.Day.ToString().PadLeft(2, Convert.ToChar("0"))
+                        ));
+                    //6. Importe 1er.Vto.	N(11)	050	060
+                    string[] importe = new string[2];
+                    if (item.MONTO1.ToString().Contains(","))
+                    {
+                        importe = item.MONTO1.ToString().Split(Convert.ToChar(","));
+                    }
+                    if (item.MONTO1.ToString().Contains("."))
+                    {
+                        importe = item.MONTO1.ToString().Split(Convert.ToChar("."));
+                    }
+                    string imp = importe[0] + importe[1];
+                    txtDet.Append(imp.Trim().PadLeft(11, Convert.ToChar("0")));
+                    //7. Fecha 2do.Vto.	N(08)	061	068
+                    txtDet.Append(string.Format("{0}{1}{2}",
+                        item.VENC2.Year,
+                        item.VENC2.Month.ToString().PadLeft(2, Convert.ToChar("0")),
+                        item.VENC2.Day.ToString().PadLeft(2, Convert.ToChar("0"))
+                        ));
+                    //8. Importe 2do.Vto.	N(11)	069	079
+                    if (item.MONTO2.ToString().Contains(","))
+                    {
+                        importe = item.MONTO2.ToString().Split(Convert.ToChar(","));
+                    }
+                    if (item.MONTO2.ToString().Contains("."))
+                    {
+                        importe = item.MONTO2.ToString().Split(Convert.ToChar("."));
+                    }
+                    imp = importe[0] + importe[1];
+                    txtDet.Append(imp.Trim().PadLeft(11, Convert.ToChar("0")));
+                    //9. Fecha 3er.Vto.	N(08)	080	087
+                    txtDet.Append(string.Format("{0}{1}{2}",
+                        item.VENC3.Year,
+                        item.VENC3.Month.ToString().PadLeft(2, Convert.ToChar("0")),
+                        item.VENC3.Day.ToString().PadLeft(2, Convert.ToChar("0"))
+                        ));
+                    //10. Importe 3er.Vto.	N(11)	088	098
+                    if (item.MONTO3.ToString().Contains(","))
+                    {
+                        importe = item.MONTO3.ToString().Split(Convert.ToChar(","));
+                    }
+                    if (item.MONTO3.ToString().Contains("."))
+                    {
+                        importe = item.MONTO3.ToString().Split(Convert.ToChar("."));
+                    }
+                    imp = importe[0] + importe[1];
+                    txtDet.Append(imp.Trim().PadLeft(11, Convert.ToChar("0")));
+                    //11. Filler1	N(19)	099	117
+                    txtDet.Append("0000000000000000000");
+                    //13. Nro.Referencia Ant.	AN(19)	118	136
+                    txtDet.Append(item.NRO_CTA.ToString().PadRight(19, Convert.ToChar(" ")));
+                    //14. Mensaje Ticket	AN(40)	137	176
+                    txtDet.Append(string.Format("PERIODO {0}-{1}/{2} FACT {3}-{4}",
+                        periodo.ToString().Substring(0, 4),
+                        periodo.ToString().Substring(4, 2),
+                        periodo.ToString().Substring(6, 2),
+                        item.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                        item.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0"))
+                        ).PadRight(40, Convert.ToChar(" ")));
+                    //15.	Mensaje Pantalla	AN(15)	177	191
+                    txtDet.Append(string.Format("PER. {0}-{1}/{2}",
+                        periodo.ToString().Substring(0, 4),
+                        periodo.ToString().Substring(4, 2),
+                        periodo.ToString().Substring(6, 2)).PadRight(15, Convert.ToChar(" ")));
+                    //16	Filler2	N(8)	192	200
+                    txtDet.Append("0".PadRight(9, Convert.ToChar("0")));
+                    txt.AppendLine(txtDet.ToString());
+                }
+                //1	Codigo Registro	N(01)	001	001
+                StringBuilder txtFooter = new StringBuilder();
+                txtFooter.Append("9");
+                //2	Codigo Prisma	N(03)	002	004
+                txtFooter.Append("400");
+                //3	Codigo Empresa	N(04)	005	008
+                txtFooter.Append("3120");
+                //4	Fecha Archivo	N(08)	009	016
+                txtFooter.Append(string.Format("{0}{1}{2}",
+                    fec.Year,
+                fec.Month.ToString().PadLeft(2, Convert.ToChar("0")),
+                fec.Day.ToString().PadLeft(2, Convert.ToChar("0"))));
+                //Cant.Registros	N(07)	017	023
+                txtFooter.Append(lst.Count.ToString().PadLeft(7, Convert.ToChar("0")));
+                //6	Filler1	N(07)	024	030
+                txtFooter.Append("0000000");
+                //7	Total Importe	N(11)	031	041
+                string[] importe2 = new string[2];
+                decimal tot = lst.Sum(
+                    t => t.MONTO1);
+                if (tot.ToString().Contains(","))
+                {
+                    importe2 = tot.ToString().Split(Convert.ToChar(","));
+                }
+                if (tot.ToString().Contains("."))
+                {
+                    importe2 = tot.ToString().Split(Convert.ToChar("."));
+                }
+                string imp2 = importe2[0] + importe2[1];
+                txtFooter.Append(imp2.Trim().PadLeft(11, Convert.ToChar("0")));
+                //8	Filler2	N(239)	042	280
+                txtFooter.Append("0".PadLeft(148, Convert.ToChar("0")));
+                txtFooter.Append("0".PadRight(11, Convert.ToChar("0")));
+                txt.AppendLine(txtFooter.ToString());
+                return Regex.Replace(txt.ToString(), @"^\s*$\n|\r", 
+                    string.Empty, RegexOptions.Multiline).TrimEnd();
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

@@ -1,0 +1,269 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class CONTACTOS : DALBase
+    {
+        public int ID { get; set; }
+        public int ID_EMPRESA { get; set; }
+        public string APELLIDO { get; set; }
+        public string NOMBRE { get; set; }
+        public string SEXO { get; set; }
+        public DateTime FEC_NAC { get; set; }
+        public string TELEFONO { get; set; }
+        public string INTERNO { get; set; }
+        public string CELULAR { get; set; }
+        public string MAIL { get; set; }
+        public bool ACTIVO { get; set; }
+        public DateTime FECHA_ALTA { get; set; }
+        public int USUARIO_ALTA { get; set; }
+        public DateTime FECHA_BAJA { get; set; }
+        public int USUARIO_BAJA { get; set; }
+        public string AREA { get; set; }
+
+        public CONTACTOS()
+        {
+            ID = 0;
+            ID_EMPRESA = 0;
+            APELLIDO = string.Empty;
+            NOMBRE = string.Empty;
+            SEXO = string.Empty;
+            FEC_NAC = UTILS.getFechaActual();
+            TELEFONO = string.Empty;
+            INTERNO = string.Empty;
+            CELULAR = string.Empty;
+            MAIL = string.Empty;
+            ACTIVO = false;
+            FECHA_ALTA = UTILS.getFechaActual();
+            USUARIO_ALTA = 0;
+            FECHA_BAJA = UTILS.getFechaActual();
+            USUARIO_BAJA = 0;
+            AREA = string.Empty;
+        }
+
+        private static List<CONTACTOS> mapeo(SqlDataReader dr)
+        {
+            List<CONTACTOS> lst = new List<CONTACTOS>();
+            CONTACTOS obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new CONTACTOS();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.ID_EMPRESA = dr.GetInt32(1); }
+                    if (!dr.IsDBNull(2)) { obj.APELLIDO = dr.GetString(2); }
+                    if (!dr.IsDBNull(3)) { obj.NOMBRE = dr.GetString(3); }
+                    if (!dr.IsDBNull(4)) { obj.SEXO = dr.GetString(4); }
+                    if (!dr.IsDBNull(5)) { obj.FEC_NAC = dr.GetDateTime(5); }
+                    if (!dr.IsDBNull(6)) { obj.TELEFONO = dr.GetString(6); }
+                    if (!dr.IsDBNull(7)) { obj.INTERNO = dr.GetString(7); }
+                    if (!dr.IsDBNull(8)) { obj.CELULAR = dr.GetString(8); }
+                    if (!dr.IsDBNull(9)) { obj.MAIL = dr.GetString(9); }
+                    if (!dr.IsDBNull(10)) { obj.ACTIVO = dr.GetBoolean(10); }
+                    if (!dr.IsDBNull(11)) { obj.FECHA_ALTA = dr.GetDateTime(11); }
+                    if (!dr.IsDBNull(12)) { obj.USUARIO_ALTA = dr.GetInt32(12); }
+                    if (!dr.IsDBNull(13)) { obj.FECHA_BAJA = dr.GetDateTime(13); }
+                    if (!dr.IsDBNull(14)) { obj.USUARIO_BAJA = dr.GetInt32(14); }
+                    if (!dr.IsDBNull(15)) { obj.AREA = dr.GetString(15); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<CONTACTOS> read(int idEmpresa)
+        {
+            try
+            {
+                List<CONTACTOS> lst = new List<CONTACTOS>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM CONTACTOS WHERE ID_EMPRESA=@ID_EMPRESA";
+                    cmd.Parameters.AddWithValue("@ID_EMPRESA", idEmpresa);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static CONTACTOS getByPk(
+        int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM CONTACTOS WHERE");
+                sql.AppendLine("ID = @ID");
+                CONTACTOS obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<CONTACTOS> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int insert(CONTACTOS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO CONTACTOS(");
+                sql.AppendLine("ID_EMPRESA");
+                sql.AppendLine(", APELLIDO");
+                sql.AppendLine(", NOMBRE");
+                sql.AppendLine(", SEXO");
+                sql.AppendLine(", FEC_NAC");
+                sql.AppendLine(", TELEFONO");
+                sql.AppendLine(", INTERNO");
+                sql.AppendLine(", CELULAR");
+                sql.AppendLine(", MAIL");
+                sql.AppendLine(", ACTIVO");
+                sql.AppendLine(", FECHA_ALTA");
+                sql.AppendLine(", USUARIO_ALTA");
+                sql.AppendLine(", AREA");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@ID_EMPRESA");
+                sql.AppendLine(", @APELLIDO");
+                sql.AppendLine(", @NOMBRE");
+                sql.AppendLine(", @SEXO");
+                sql.AppendLine(", @FEC_NAC");
+                sql.AppendLine(", @TELEFONO");
+                sql.AppendLine(", @INTERNO");
+                sql.AppendLine(", @CELULAR");
+                sql.AppendLine(", @MAIL");
+                sql.AppendLine(", @ACTIVO");
+                sql.AppendLine(", @FECHA_ALTA");
+                sql.AppendLine(", @USUARIO_ALTA");
+                sql.AppendLine(", @AREA");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID_EMPRESA", obj.ID_EMPRESA);
+                    cmd.Parameters.AddWithValue("@APELLIDO", obj.APELLIDO);
+                    cmd.Parameters.AddWithValue("@NOMBRE", obj.NOMBRE);
+                    cmd.Parameters.AddWithValue("@SEXO", obj.SEXO);
+                    cmd.Parameters.AddWithValue("@FEC_NAC", obj.FEC_NAC);
+                    cmd.Parameters.AddWithValue("@TELEFONO", obj.TELEFONO);
+                    cmd.Parameters.AddWithValue("@INTERNO", obj.INTERNO);
+                    cmd.Parameters.AddWithValue("@CELULAR", obj.CELULAR);
+                    cmd.Parameters.AddWithValue("@MAIL", obj.MAIL);
+                    cmd.Parameters.AddWithValue("@ACTIVO", obj.ACTIVO);
+                    cmd.Parameters.AddWithValue("@FECHA_ALTA", obj.FECHA_ALTA);
+                    cmd.Parameters.AddWithValue("@USUARIO_ALTA", obj.USUARIO_ALTA);
+                    cmd.Parameters.AddWithValue("@AREA", obj.AREA);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(CONTACTOS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  CONTACTOS SET");
+                sql.AppendLine("ID_EMPRESA=@ID_EMPRESA");
+                sql.AppendLine(", APELLIDO=@APELLIDO");
+                sql.AppendLine(", NOMBRE=@NOMBRE");
+                sql.AppendLine(", SEXO=@SEXO");
+                sql.AppendLine(", FEC_NAC=@FEC_NAC");
+                sql.AppendLine(", TELEFONO=@TELEFONO");
+                sql.AppendLine(", INTERNO=@INTERNO");
+                sql.AppendLine(", CELULAR=@CELULAR");
+                sql.AppendLine(", MAIL=@MAIL");
+                sql.AppendLine(", ACTIVO=@ACTIVO");
+                sql.AppendLine(", AREA=@AREA");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID_EMPRESA", obj.ID_EMPRESA);
+                    cmd.Parameters.AddWithValue("@APELLIDO", obj.APELLIDO);
+                    cmd.Parameters.AddWithValue("@NOMBRE", obj.NOMBRE);
+                    cmd.Parameters.AddWithValue("@SEXO", obj.SEXO);
+                    cmd.Parameters.AddWithValue("@FEC_NAC", obj.FEC_NAC);
+                    cmd.Parameters.AddWithValue("@TELEFONO", obj.TELEFONO);
+                    cmd.Parameters.AddWithValue("@INTERNO", obj.INTERNO);
+                    cmd.Parameters.AddWithValue("@CELULAR", obj.CELULAR);
+                    cmd.Parameters.AddWithValue("@MAIL", obj.MAIL);
+                    cmd.Parameters.AddWithValue("@ACTIVO", obj.ACTIVO);
+                    cmd.Parameters.AddWithValue("@AREA", obj.AREA);
+                    cmd.Parameters.AddWithValue("@ID", obj.ID);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(int id)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  CONTACTOS ");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+

@@ -1,0 +1,332 @@
+﻿using iTextSharp.text;
+using iTextSharp.text.pdf;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using Image = iTextSharp.text.Image;
+
+namespace LaHerradura.Back.Reportes
+{
+    public partial class NotaCredito : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                ShowPdf(CreatePDF2());
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        private void ShowPdf(byte[] strS)
+        {
+            int nroCta = Convert.ToInt32(Request.QueryString["nrocta"]);
+            Response.ClearContent();
+            Response.ClearHeaders();
+            Response.ContentType = "application/pdf";
+            Response.AddHeader("Content-Disposition", "Inline; filename=" +
+                            "Expensas_cuenta_" + nroCta + ".pdf");
+
+            Response.BinaryWrite(strS);
+            Response.End();
+            Response.Flush();
+            Response.Clear();
+        }
+        private byte[] CreatePDF2()
+        {
+            Document doc = new Document(PageSize.LETTER, 30, 30, 30, 30);
+            int nroCta = Convert.ToInt32(Request.QueryString["nrocta"]);
+            int nroCte = Convert.ToInt32(Request.QueryString["nrocte"]);
+            int periodo = Convert.ToInt32(Request.QueryString["periodo"]);
+            string cuit = Request.QueryString["cuit"].ToString();
+
+            DAL.INMUEBLES objInm = DAL.INMUEBLES.getByNroCta(nroCta);
+            List<DAL.PERSONAS_GRILLA> lstPer = DAL.PERSONAS_GRILLA.getByNroCta(nroCta);
+
+            Paragraph salto = new Paragraph();
+
+            salto.SpacingAfter = 10;
+            using (MemoryStream output = new MemoryStream())
+            {
+                PdfWriter wri = PdfWriter.GetInstance(doc, output);
+                doc.Open();
+                iTextSharp.text.Font _standardFont = new iTextSharp.text.Font(iTextSharp.text.Font.HELVETICA, 8,
+                    iTextSharp.text.Font.NORMAL, Color.BLACK);
+                iTextSharp.text.Font _encabezado = new iTextSharp.text.Font(iTextSharp.text.Font.HELVETICA, 12,
+                    iTextSharp.text.Font.BOLD, Color.BLACK);
+                /**/
+                Image png;
+                //png = Image.GetInstance(Server.MapPath("../../img/" + "logoCN.png"));
+                //png = Image.GetInstance("https://aclaherradura.com.ar/img/" + "logoCN.png");
+                png = Image.GetInstance(Server.MapPath("../../img/" + "logoCN.png"));
+                #region ENCABEZADO
+                //ENCABEZADO
+                PdfPTable tblEncabezado = new PdfPTable(2)
+                {
+                    WidthPercentage = 100
+                };
+                PdfPCell clLogo = new PdfPCell()
+                {
+                    Image = png,
+                    BorderWidth = 0,
+                    BorderWidthTop = 1f,
+                    BorderWidthBottom = 1f,
+                    BorderWidthLeft = 1f
+                };
+
+                tblEncabezado.AddCell(clLogo);
+
+                PdfPCell clDatos = new PdfPCell()
+                {
+                    BorderWidth = 0,
+                    BorderWidthTop = 1f,
+                    BorderWidthBottom = 1f,
+                    BorderWidthRight = 1f
+                };
+                DAL.FACTURAS_X_EXPENSA objNC = DAL.FACTURAS_X_EXPENSA.getByPk(2, nroCte, 13);
+                string nroF = string.Format("{0}-{1}",
+                    objNC.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                    objNC.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0")));
+
+                clDatos.AddElement(new Phrase("Nota de Credito", _encabezado));
+
+
+                clDatos.AddElement(salto);
+
+                clDatos.AddElement(new Phrase(
+                    string.Format("Nro: {0}", nroF), _encabezado));
+                clDatos.AddElement(salto);
+                clDatos.AddElement(new Phrase(string.Format("Fecha: {0}/{1}/{2}",
+                    objNC.FECHA_CAE.Day, objNC.FECHA_CAE.Month, objNC.FECHA_CAE.Year
+                    , _standardFont)));
+
+                clDatos.AddElement(salto);
+
+
+                tblEncabezado.AddCell(clDatos);
+
+                doc.Add(tblEncabezado);
+                #endregion
+                #region PROPIETARIO
+                //PROPIETARIO - CUENTA
+                PdfPTable tblPrpietario = new PdfPTable(2)
+                {
+                    WidthPercentage = 100
+
+                };
+                PdfPCell clProp = new PdfPCell()
+                {
+                    BorderWidth = 0,
+                    BorderWidthBottom = 1f,
+                    BorderWidthLeft = 1f,
+                    PaddingLeft = 10
+                };
+                string propietarios = string.Empty;
+                string cuitPer = string.Empty;
+                foreach (var item in lstPer)
+                {
+                    if (item.RESPONSABLE_FACTURACION)
+                    {
+                        propietarios += string.Format("{0}, ", item.NOMBRE);
+                        cuitPer = item.CUIT;
+                    }
+                }
+                foreach (var item in lstPer)
+                {
+                    if (item.RELACION == "Inquilino")
+                    {
+                        propietarios += string.Format("(Inquilinos: {0}), ", item.NOMBRE);
+                    }
+                }
+                clProp.AddElement(new Phrase(string.Format(
+                    "Señores: {0} (Manzana: {1} - Lote: {2})", propietarios,
+                    objInm.MANZANA, objInm.LOTE), _standardFont));
+                clProp.AddElement(salto);
+                clProp.AddElement(new Phrase(string.Format("Direccion: {0} N° {1}",
+                    objInm.CALLE, objInm.NRO), _standardFont));
+                clProp.AddElement(salto);
+                clProp.AddElement(new Phrase("I.V.A.: Consumidor Final", _standardFont));
+
+                clProp.AddElement(salto);
+
+                PdfPCell clCta = new PdfPCell()
+                {
+                    BorderWidth = 0,
+                    BorderWidthBottom = 1f,
+                    BorderWidthRight = 1f
+                };
+                clCta.AddElement(new Phrase(string.Format("C.U.I.T.: {0}-{1}-{2}",
+                    cuitPer.Substring(0, 2), cuitPer.Substring(2, 8), cuitPer.Substring(10, 1)), _standardFont));
+                clCta.AddElement(salto);
+                clCta.AddElement(new Phrase(string.Format("Nro. de cuenta: {0}", nroCta), _standardFont));
+                clCta.AddElement(salto);
+
+                clCta.AddElement(new Phrase(string.Format("Periodo: {0}-{1}/{2}",
+                    periodo.ToString().Substring(0, 4),
+                    periodo.ToString().Substring(4, 2),
+                    periodo.ToString().Substring(6, 2)), _encabezado));
+
+
+                clCta.AddElement(salto);
+
+                tblPrpietario.AddCell(clProp);
+                tblPrpietario.AddCell(clCta);
+                doc.Add(tblPrpietario);
+                #endregion
+                #region DETALLE_FACTURA
+                //DETALLE FACTURA
+                PdfPTable tblDetalle = new PdfPTable(2)
+                {
+                    WidthPercentage = 100,
+
+                };
+                tblDetalle.SetWidths(new float[] { 70, 30 });
+                PdfPCell clCod = new PdfPCell(new Paragraph("Concepto", _standardFont))
+                {
+                    BorderWidth = 0,
+                    BorderWidthBottom = 1f,
+                    BorderWidthLeft = 1f,
+                    BorderWidthRight = 1f,
+                    PaddingLeft = 10,
+                    PaddingBottom = 10,
+                    PaddingTop = 10,
+                    BackgroundColor = Color.LIGHT_GRAY
+                };
+                //BarcodeInter25
+                PdfPCell clSubTotal = new PdfPCell(new Paragraph("Monto", _standardFont))
+                {
+                    BorderWidth = 0,
+                    BorderWidthBottom = 1f,
+                    BorderWidthRight = 1f,
+                    PaddingLeft = 10,
+                    PaddingBottom = 10,
+                    PaddingTop = 10,
+                    BackgroundColor = Color.LIGHT_GRAY
+                };
+
+                tblDetalle.AddCell(clCod);
+
+                tblDetalle.AddCell(clSubTotal);
+
+                PdfPCell clCodd = new PdfPCell(new Paragraph(objNC.DETALLE, _standardFont))
+                {
+                    BorderWidth = 0,
+                    BorderWidthBottom = 1f,
+                    BorderWidthLeft = 1f,
+                    BorderWidthRight = 1f,
+                    PaddingLeft = 10,
+                    PaddingBottom = 10,
+                    PaddingTop = 10
+                };
+
+                PdfPCell clSubTotald = new PdfPCell(new Paragraph(string.Format("{0:c}",
+                    objNC.MONTO), _standardFont))
+                {
+                    BorderWidth = 0,
+                    BorderWidthBottom = 1f,
+                    BorderWidthRight = 1f,
+                    PaddingLeft = 10,
+                    PaddingBottom = 10,
+                    PaddingTop = 10
+                };
+
+                tblDetalle.AddCell(clCodd);
+                tblDetalle.AddCell(clSubTotald);
+
+
+                doc.Add(tblDetalle);
+
+                #endregion
+
+
+                #region PIE
+
+                PdfPTable tblPie2 = new PdfPTable(3)
+                {
+                    WidthPercentage = 100
+                };
+                PdfPCell clPie2_1 = new PdfPCell()
+                {
+                    BorderWidth = 0,
+                    Padding = 10
+                };
+                clPie2_1.AddElement(new Phrase("COMPROBANTE AUTORIZADO", _standardFont));
+                tblPie2.AddCell(clPie2_1);
+                PdfPCell clPie2_2 = new PdfPCell()
+                {
+                    BorderWidth = 0,
+                    Padding = 10
+                };
+                clPie2_2.AddElement(new Phrase(string.Format(
+                    "C.A.E. N°: {0}", objNC.CAE), _standardFont));
+                tblPie2.AddCell(clPie2_2);
+
+                PdfPCell clPie2_3 = new PdfPCell()
+                {
+                    BorderWidth = 0,
+                    Padding = 10
+                };
+                clPie2_3.AddElement(new Phrase(string.Format(
+                    "Vto. C.A.E.: {0}", objNC.VENC_CAE), _standardFont));
+                tblPie2.AddCell(clPie2_3);
+                doc.Add(tblPie2);
+                //CODIGO BARRA AFIP
+                PdfPTable tblPie3 = new PdfPTable(3)
+                {
+                    WidthPercentage = 100
+                };
+                PdfPCell clPie3_1 = new PdfPCell()
+                {
+                    BorderWidth = 0,
+                    Padding = 10
+                };
+                clPie3_1.AddElement(new Phrase("", _standardFont));
+                tblPie3.AddCell(clPie3_1);
+                PdfPCell clPie3_2 = new PdfPCell()
+                {
+                    BorderWidth = 0,
+                    Padding = 10
+                };
+
+                string strCadena = LaHerradura.Utils.Utils.ArmoCBarra(cuit, 11,
+objNC.PTO_VTA, objNC.CAE, objNC.FECHA_CAE);
+
+
+                clPie3_2.AddElement(salto);
+
+
+                PdfContentByte cb2 = wri.DirectContent;
+                Barcode128 code252 = new Barcode128();
+                code252.GenerateChecksum = true;
+                code252.Code = strCadena;
+
+                clPie3_2.AddElement(
+                    code252.CreateImageWithBarcode(cb2, null, null));
+
+                tblPie3.AddCell(clPie3_2);
+                PdfPCell clPie3_3 = new PdfPCell()
+                {
+                    BorderWidth = 0,
+                    Padding = 10
+                };
+                clPie3_3.AddElement(new Phrase("", _standardFont));
+                tblPie3.AddCell(clPie3_3);
+
+                doc.Add(tblPie3);
+
+
+                #endregion
+                doc.Close();
+                return output.ToArray();
+            }
+
+        }
+    }
+}

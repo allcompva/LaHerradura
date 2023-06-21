@@ -1,0 +1,232 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class ENVIO_COMPROBANTES : DALBase
+    {
+        public int ID { get; set; }
+        public int NRO_RECIBO_PAGO { get; set; }
+        public int USUARIO_ENVIO { get; set; }
+        public DateTime FECHA_ENVIO { get; set; }
+        public string MAILS { get; set; }
+        public int NRO_CTA { get; set; }
+
+        public ENVIO_COMPROBANTES()
+        {
+            ID = 0;
+            NRO_RECIBO_PAGO = 0;
+            USUARIO_ENVIO = 0;
+            FECHA_ENVIO = DateTime.Now;
+            MAILS = string.Empty;
+            NRO_CTA = 0;
+        }
+
+        private static List<ENVIO_COMPROBANTES> mapeo(SqlDataReader dr)
+        {
+            List<ENVIO_COMPROBANTES> lst = new List<ENVIO_COMPROBANTES>();
+            ENVIO_COMPROBANTES obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new ENVIO_COMPROBANTES();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.NRO_RECIBO_PAGO = dr.GetInt32(1); }
+                    if (!dr.IsDBNull(2)) { obj.USUARIO_ENVIO = dr.GetInt32(2); }
+                    if (!dr.IsDBNull(3)) { obj.FECHA_ENVIO = dr.GetDateTime(3); }
+                    if (!dr.IsDBNull(4)) { obj.MAILS = dr.GetString(4); }
+                    if (!dr.IsDBNull(5)) { obj.NRO_CTA = dr.GetInt32(5); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<ENVIO_COMPROBANTES> readNoEnviados()
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT DISTINCT NRO_RECIBO_PAGO, NRO_CTA FROM CTACTE_EXPENSAS A");
+                sql.AppendLine("WHERE YEAR(FECHA) >= 2021 AND TIPO_MOVIMIENTO = 2");
+                sql.AppendLine("AND NRO_RECIBO_PAGO NOT IN");
+                sql.AppendLine("(SELECT NRO_RECIBO_PAGO FROM ENVIO_COMPROBANTES)");
+                List<ENVIO_COMPROBANTES> lst = new List<ENVIO_COMPROBANTES>();
+                ENVIO_COMPROBANTES obj = new ENVIO_COMPROBANTES();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    if (dr.HasRows)
+                    {
+                        while (dr.Read())
+                        {
+                            obj = new ENVIO_COMPROBANTES();
+                            obj.NRO_RECIBO_PAGO = dr.GetInt32(0);
+                            obj.NRO_CTA = dr.GetInt32(1);
+                            lst.Add(obj);
+                        }
+                    }
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<ENVIO_COMPROBANTES> read()
+        {
+            try
+            {
+                List<ENVIO_COMPROBANTES> lst = new List<ENVIO_COMPROBANTES>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM ENVIO_COMPROBANTES";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static ENVIO_COMPROBANTES getByPk(
+        int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM ENVIO_COMPROBANTES WHERE");
+                sql.AppendLine("ID = @ID");
+                ENVIO_COMPROBANTES obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<ENVIO_COMPROBANTES> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int insert(ENVIO_COMPROBANTES obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO ENVIO_COMPROBANTES(");
+                sql.AppendLine("NRO_RECIBO_PAGO");
+                sql.AppendLine(", USUARIO_ENVIO");
+                sql.AppendLine(", FECHA_ENVIO");
+                sql.AppendLine(", MAILS");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@NRO_RECIBO_PAGO");
+                sql.AppendLine(", @USUARIO_ENVIO");
+                sql.AppendLine(", @FECHA_ENVIO");
+                sql.AppendLine(", @MAILS");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_RECIBO_PAGO", obj.NRO_RECIBO_PAGO);
+                    cmd.Parameters.AddWithValue("@USUARIO_ENVIO", obj.USUARIO_ENVIO);
+                    cmd.Parameters.AddWithValue("@FECHA_ENVIO", obj.FECHA_ENVIO);
+                    cmd.Parameters.AddWithValue("@MAILS", obj.MAILS);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(ENVIO_COMPROBANTES obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  ENVIO_COMPROBANTES SET");
+                sql.AppendLine("NRO_RECIBO_PAGO=@NRO_RECIBO_PAGO");
+                sql.AppendLine(", USUARIO_ENVIO=@USUARIO_ENVIO");
+                sql.AppendLine(", FECHA_ENVIO=@FECHA_ENVIO");
+                sql.AppendLine(", MAILS=@MAILS");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_RECIBO_PAGO", obj.NRO_RECIBO_PAGO);
+                    cmd.Parameters.AddWithValue("@USUARIO_ENVIO", obj.USUARIO_ENVIO);
+                    cmd.Parameters.AddWithValue("@FECHA_ENVIO", obj.FECHA_ENVIO);
+                    cmd.Parameters.AddWithValue("@MAILS", obj.MAILS);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(ENVIO_COMPROBANTES obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  ENVIO_COMPROBANTES ");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", obj.ID);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+

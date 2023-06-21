@@ -1,0 +1,165 @@
+﻿using Newtonsoft.Json;
+using RestSharp;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Transactions;
+
+namespace PayPerTic.SolicitudPago
+{
+    public class SolicitudPago
+    {
+        public string external_transaction_id { get; set; }
+        public List<Detail> details { get; set; }
+        public string currency_id { get; set; }
+        public Payer payer { get; set; }
+        public string due_date { get; set; }
+        public string last_due_date { get; set; }
+        public string notification_url { get; set; }
+
+        public SolicitudPago()
+        {
+            external_transaction_id = string.Empty;
+            currency_id = "ARS";
+            details = new List<Detail>();
+            payer = new Payer();
+            //due_date = string.Format("{0}-{1}-{2}T00:00:00-0300", DateTime.Now.Year, 
+            //    DateTime.Now.Month.ToString().PadLeft(2, Convert.ToChar("0")),
+            //    DateTime.Now.Day.ToString().PadLeft(2, Convert.ToChar("0")));
+        }
+
+        public static string pago(List<DAL.CTACTE_EXPENSAS> lst, int idPersona)
+        {
+            //try
+            //{
+                var client = new RestClient("https://api.paypertic.com/pagos");
+                var request = new RestRequest(Method.POST);
+                request.AddHeader("cache-control", "no-cache");
+                request.AddHeader("content-type", "application/json");
+                request.AddHeader("Authorization", "Bearer " + 
+                    Autorizacion.Solicitud.getToken());
+
+                DAL.PERSONAS persona = DAL.PERSONAS.getByPk(idPersona);
+                DAL.PAGOS_PAYPERTIC oPago = new DAL.PAGOS_PAYPERTIC();
+                oPago.CANT_CUOTAS = 1;
+                oPago.CEL = persona.CEL;
+                oPago.CUIT = persona.NRO_CUIT;
+                oPago.FECHA = DateTime.Now;
+                oPago.MAIL = persona.MAIL;
+                oPago.MONTO = lst.Sum(c => c.SALDO) - lst.Sum(d => d.DESC_VENCIMIENTO);
+                oPago.NRO_CTA = lst[0].NRO_CTA;
+
+                int comprobante = DAL.PAGOS_PAYPERTIC.insert(oPago);
+
+                SolicitudPago objPago = new SolicitudPago();
+                objPago.currency_id = "ARS";
+                objPago.external_transaction_id = comprobante.ToString();
+                //objPago.last_due_date = objPago.due_date;
+                objPago.notification_url = "https://aclaherradura.com.ar/Notificaciones.aspx";
+
+
+                Payer objPagador = new Payer();
+                if (persona.MAIL == string.Empty)
+                    persona.MAIL = "allcompva@gmail.com";
+                objPagador.email = persona.MAIL;
+                objPagador.name = string.Format("{0} {1}", persona.NOMBRE,
+                    persona.APELLIDO);
+                Identification ident = new Identification();
+                ident.country = "ARG";
+                ident.number = persona.NRO_CUIT;
+                ident.type = "CUIT_ARG";
+                objPagador.identification = ident;
+                objPago.payer = objPagador;
+
+                foreach (var item in lst)
+                {
+                    //DAL.LIQUIDACION_EXPENSAS objLiq = DAL.LIQUIDACION_EXPENSAS.getByPk(item.PERIODO);
+                    DAL.CTACTE_EXPENSAS.setPayPerTic(item.ID, comprobante);
+                    Detail obj = new Detail();
+                    obj.amount = Convert.ToDouble(item.SALDO - item.DESC_VENCIMIENTO);
+                    obj.concept_description = Utils.getDenominacionPeriodo(item.PERIODO);
+                    obj.concept_id = item.ID.ToString();
+                    obj.external_reference = item.PERIODO.ToString();
+                    objPago.details.Add(obj);
+                }
+
+                DateTime venc = DateTime.Now;
+
+                objPago.due_date = venc.Year + "-" + venc.Month.ToString().PadLeft(
+    2, Convert.ToChar("0")) + "-" + venc.Day.ToString().PadLeft(2, Convert.ToChar("0")) +
+"T" + venc.Hour.ToString().PadLeft(2, Convert.ToChar("0")) + ":" +
+venc.Minute.ToString().PadLeft(2, Convert.ToChar("0")) + ":" +
+venc.Second.ToString().PadLeft(2, Convert.ToChar("0")) + "-0300";
+
+                venc = venc.AddMinutes(5);
+
+                objPago.last_due_date = venc.Year + "-" + venc.Month.ToString().PadLeft(
+                    2, Convert.ToChar("0")) + "-" + venc.Day.ToString().PadLeft(2, Convert.ToChar("0")) +
+                "T" + venc.Hour.ToString().PadLeft(2, Convert.ToChar("0")) + ":" +
+                venc.Minute.ToString().PadLeft(2, Convert.ToChar("0")) + ":" +
+                venc.Second.ToString().PadLeft(2, Convert.ToChar("0")) + "-0300";
+
+                string js = JsonConvert.SerializeObject(objPago);
+
+
+                request.AddParameter("application/json", js, RestSharp.ParameterType.RequestBody);
+                IRestResponse response = client.Execute(request);
+                PayPerTic.RespuestaPago.respuesta respueta =
+                    JsonConvert.DeserializeObject<PayPerTic.RespuestaPago.respuesta>(response.Content);
+
+                DAL.PAGOS_PAYPERTIC.setHash(comprobante, respueta.id);
+
+                return respueta.form_url;
+            //}
+            //catch (Exception ex)
+            //{
+
+            //    throw ex;
+            //}
+
+
+        }
+
+
+        public static string reintentarPago()
+        {
+            var client = new RestClient("https://api.paypertic.com/pagos/reintentar/6743edf7-0c3e-4e2c-a7a7-1296e7fb2087");
+            var request = new RestRequest(Method.POST);
+            request.AddHeader("cache-control", "no-cache");
+            request.AddHeader("content-type", "application/json");
+            request.AddHeader("Authorization", "Bearer " + Autorizacion.Solicitud.getToken());
+            request.AddParameter("application/json", "{}", RestSharp.ParameterType.RequestBody);
+            IRestResponse response = client.Execute(request);
+            RespuestaPago respueta = JsonConvert.DeserializeObject<RespuestaPago>(response.Content);
+            return respueta.form_url;
+        }
+
+        public static Notificaciones.Noti CosultaPago(string idPago)
+        {
+            try
+            {
+                Notificaciones.Noti noti = null;
+                var client = new RestClient("https://api.paypertic.com/pagos/" + idPago);
+                var request = new RestRequest(Method.GET);
+                request.AddHeader("cache-control", "no-cache");
+                //request.AddHeader("content-type", "application/json");
+                request.AddHeader("Authorization", "Bearer " + Autorizacion.Solicitud.getToken());
+
+                IRestResponse response = client.Execute(request);
+
+                var miCadena = response.Content;
+                if (miCadena.Length > 10)
+                    noti = JsonConvert.DeserializeObject<Notificaciones.Noti>(miCadena);
+
+                return noti;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+        }
+    }
+}

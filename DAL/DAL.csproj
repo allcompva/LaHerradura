@@ -1,0 +1,207 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\NUnit.3.10.1\build\NUnit.props" Condition="Exists('..\packages\NUnit.3.10.1\build\NUnit.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{62A3D887-2C93-4DD3-AD36-75CE540CB387}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>DAL</RootNamespace>
+    <AssemblyName>DAL</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MercadoPago, Version=1.6.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\mercadopago-sdk.1.6.1\lib\net35\MercadoPago.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="nunit.framework, Version=3.10.1.0, Culture=neutral, PublicKeyToken=2638cd05610744eb, processorArchitecture=MSIL">
+      <HintPath>..\packages\NUnit.3.10.1\lib\net45\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="ObjectDumper, Version=1.0.0.12, Culture=neutral, PublicKeyToken=9e2fabf3af85dba9, processorArchitecture=MSIL">
+      <HintPath>..\packages\ObjectDumper.1.0.0.12\lib\net35-Client\ObjectDumper.dll</HintPath>
+    </Reference>
+    <Reference Include="RestSharp, Version=106.0.0.0, Culture=neutral, PublicKeyToken=598062e77f915f75, processorArchitecture=MSIL">
+      <HintPath>..\packages\RestSharp.106.10.1\lib\net452\RestSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Net" />
+    <Reference Include="System.Transactions" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ANULA_RECIBO.cs" />
+    <Compile Include="ASIENTOS.cs" />
+    <Compile Include="ASIENTOS_DETALLE.cs" />
+    <Compile Include="ASIENTOS_GRILLA.cs" />
+    <Compile Include="ASIENTOS_PRUEBA.cs" />
+    <Compile Include="ASIENTO_PAGO_EXPENSAS_DEBE.cs" />
+    <Compile Include="ASIENTO_PAGO_EXPENSAS_HABER.cs" />
+    <Compile Include="ASIENTO_PAGO_PROV_DEBE.cs" />
+    <Compile Include="ASIENTO_PAGO_PROV_HABER.cs" />
+    <Compile Include="ASIENTO_PROV.cs" />
+    <Compile Include="BANCOS.cs" />
+    <Compile Include="Banelco.cs" />
+    <Compile Include="BILLETERA.cs" />
+    <Compile Include="BILLETERA_GASTOS.cs" />
+    <Compile Include="Class1.cs" />
+    <Compile Include="ComprobantesAsociados.cs" />
+    <Compile Include="CONCEPTOS_EXPENSA.cs" />
+    <Compile Include="CONCEPTOS_X_INMUEBLE.cs" />
+    <Compile Include="CONCEPTOS_X_LIQUIDACION.cs" />
+    <Compile Include="CONTACTOS.cs" />
+    <Compile Include="CTACTE_EXPENSAS.cs" />
+    <Compile Include="CTACTE_GASTOS.cs" />
+    <Compile Include="CUENTAS_X_PROVEEDOR.cs" />
+    <Compile Include="CUENTA_COMBO.cs" />
+    <Compile Include="DALBase.cs" />
+    <Compile Include="Detalle_Conceptos.cs" />
+    <Compile Include="DETALLE_CTA.cs" />
+    <Compile Include="DETALLE_DEUDA.cs" />
+    <Compile Include="DETALLE_INTERES.cs" />
+    <Compile Include="DetLiq.cs" />
+    <Compile Include="DEUDA_ATRASADA.cs" />
+    <Compile Include="EMPRESA.cs" />
+    <Compile Include="ENVIO_COMPROBANTES.cs" />
+    <Compile Include="EXCLUSION_CONCEPTO.cs" />
+    <Compile Include="FACTURACION_INTERESES.cs" />
+    <Compile Include="FACTURAS_A_INSERTAR.cs" />
+    <Compile Include="FACTURAS_X_EXPENSA.cs" />
+    <Compile Include="FACTURAS_X_OP.cs" />
+    <Compile Include="INFORME_DEUDA.cs" />
+    <Compile Include="INFORME_PAGO_DETALLE.cs" />
+    <Compile Include="INFORME_PERIODOS.cs" />
+    <Compile Include="INFORME_SALDOS.cs" />
+    <Compile Include="INFORME_TRANSACCIONES.cs" />
+    <Compile Include="INF_DEUDA_PERIODO.cs" />
+    <Compile Include="INF_GASTOS.cs" />
+    <Compile Include="INMUEBLES.cs" />
+    <Compile Include="IVA_COMPRAS.cs" />
+    <Compile Include="IVA_VENTAS.cs" />
+    <Compile Include="LIBRO_MAYOR.cs" />
+    <Compile Include="LIBRO_MAYOR_ANT.cs" />
+    <Compile Include="LIQUIDACION_EXPENSAS.cs" />
+    <Compile Include="MAIL_X_CTAS.cs" />
+    <Compile Include="MD5Encryption.cs" />
+    <Compile Include="MEDIOS_PAGO.cs" />
+    <Compile Include="MOVIMIENTO_CTACTE.cs" />
+    <Compile Include="MOVIM_CAJA_GRILLA.cs" />
+    <Compile Include="MOV_BILLETERA.cs" />
+    <Compile Include="MOV_BILLETERA_GASTOS.cs" />
+    <Compile Include="MOV_CTA_GASTOS.cs" />
+    <Compile Include="ORDENES_PAGO.cs" />
+    <Compile Include="PAGOS_CON_CUENTA_TABLA.cs" />
+    <Compile Include="PAGOS_PAYPERTIC.cs" />
+    <Compile Include="PAGOS_X_FACTURA.cs" />
+    <Compile Include="PAGOS_X_FACTURA_GASTOS.cs" />
+    <Compile Include="PAGO_CTA.cs" />
+    <Compile Include="paises.cs" />
+    <Compile Include="PERSONAS.cs" />
+    <Compile Include="PERSONAS_GRILLA.cs" />
+    <Compile Include="PERSONAS_X_INMUEBLES.cs" />
+    <Compile Include="PLANES_PAGO.cs" />
+    <Compile Include="PLANILLA_CAJA.cs" />
+    <Compile Include="PLAN_CUENTA.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PROVEEDORES.cs" />
+    <Compile Include="provincias.cs" />
+    <Compile Include="PRUEBA.cs" />
+    <Compile Include="PRUEBA_NOTIFICACION.cs" />
+    <Compile Include="RECIBO_PAGO.cs" />
+    <Compile Include="SERVICIOS.cs" />
+    <Compile Include="Servicios\AGENDA_ESPECIAL.cs" />
+    <Compile Include="Servicios\AGENDA_GENERAL.cs" />
+    <Compile Include="Servicios\DIAS_NO_LABORALES.cs" />
+    <Compile Include="Servicios\GrillaTurnos.cs" />
+    <Compile Include="Servicios\REQUISITOS.cs" />
+    <Compile Include="Servicios\TURNOS.cs" />
+    <Compile Include="Servicios\USUARIOS_CARNETS.cs" />
+    <Compile Include="SUMAS_SALDO.cs" />
+    <Compile Include="TB_CONDICION_IVA.cs" />
+    <Compile Include="TB_CTA_EGRESOS.cs" />
+    <Compile Include="TB_CTA_INGRESO.cs" />
+    <Compile Include="TB_MEDIOS_PAGO.cs" />
+    <Compile Include="TB_MOVIM_CAJA.cs" />
+    <Compile Include="TB_PLANES_PAGO.cs" />
+    <Compile Include="TELEFONO_PERSONA.cs" />
+    <Compile Include="USUARIOS.cs" />
+    <Compile Include="UTILS.cs" />
+    <Compile Include="VISTA_ANTICIPO_PROVEEDOR.cs" />
+    <Compile Include="VISTA_CAJAS.cs" />
+    <Compile Include="VISTA_FACTURAS.cs" />
+    <Compile Include="VISTA_PAGO_PROVEEDORES.cs" />
+    <Compile Include="VISTA_PLAN.cs" />
+    <Compile Include="VISTA_SALDOS.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.5.2">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.5.2 %28x86 y x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>Este proyecto hace referencia a los paquetes NuGet que faltan en este equipo. Use la restauración de paquetes NuGet para descargarlos. Para obtener más información, consulte http://go.microsoft.com/fwlink/?LinkID=322105. El archivo que falta es {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\NUnit.3.10.1\build\NUnit.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NUnit.3.10.1\build\NUnit.props'))" />
+  </Target>
+</Project>

@@ -1,0 +1,212 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class IVA_COMPRAS : DALBase
+    {
+        public DateTime FECHA_CAE { get; set; }
+        public string RAZON_SOCIAL { get; set; }
+        public string PTO_VTA { get; set; }
+        public string NRO_CTE { get; set; }
+        public string OBS { get; set; }
+        public decimal MONTO_ORIGINAL { get; set; }
+
+        public IVA_COMPRAS()
+        {
+            FECHA_CAE = UTILS.getFechaActual();
+            RAZON_SOCIAL = string.Empty;
+            PTO_VTA = string.Empty;
+            NRO_CTE = string.Empty;
+            OBS = string.Empty;
+            MONTO_ORIGINAL = 0;
+        }
+
+        private static List<IVA_COMPRAS> mapeo(SqlDataReader dr)
+        {
+            List<IVA_COMPRAS> lst = new List<IVA_COMPRAS>();
+            IVA_COMPRAS obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new IVA_COMPRAS();
+                    if (!dr.IsDBNull(0)) { obj.FECHA_CAE = dr.GetDateTime(0); }
+                    if (!dr.IsDBNull(1)) { obj.RAZON_SOCIAL = dr.GetString(1); }
+                    if (!dr.IsDBNull(2)) { obj.PTO_VTA = dr.GetString(2); }
+                    if (!dr.IsDBNull(3)) { obj.NRO_CTE = dr.GetString(3); }
+                    if (!dr.IsDBNull(4)) { obj.OBS = dr.GetString(4); }
+                    if (!dr.IsDBNull(5)) { obj.MONTO_ORIGINAL = dr.GetDecimal(5); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<IVA_COMPRAS> read(int anio, int mes)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT A.FECHA_CAE, B.RAZON_SOCIAL,");
+                sql.AppendLine("RIGHT('0000'+CAST(A.PTO_VTA AS VARCHAR(4)),4) AS PTO_VTA,");
+                sql.AppendLine("RIGHT('0000000000'+CAST(A.NRO_CTE AS VARCHAR(10)),10) AS NRO_CTE,");
+                sql.AppendLine("A.OBS, A.MONTO_ORIGINAL");
+                sql.AppendLine("FROM CTACTE_GASTOS A");
+                sql.AppendLine("INNER JOIN PROVEEDORES B ON A.ID_PROVEEDOR=B.ID");
+                sql.AppendLine("WHERE MONTH(FECHA_CAE)=@MES AND YEAR(FECHA_CAE)=@ANIO");
+
+                List<IVA_COMPRAS> lst = new List<IVA_COMPRAS>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@MES", mes);
+                    cmd.Parameters.AddWithValue("@ANIO", anio);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static IVA_COMPRAS getByPk(
+        )
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM IVA_COMPRAS WHERE");
+                IVA_COMPRAS obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<IVA_COMPRAS> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int insert(IVA_COMPRAS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO IVA_COMPRAS(");
+                sql.AppendLine("FECHA_CAE");
+                sql.AppendLine(", RAZON_SOCIAL");
+                sql.AppendLine(", PTO_VTA");
+                sql.AppendLine(", NRO_CTE");
+                sql.AppendLine(", OBS");
+                sql.AppendLine(", MONTO_ORIGINAL");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@FECHA_CAE");
+                sql.AppendLine(", @RAZON_SOCIAL");
+                sql.AppendLine(", @PTO_VTA");
+                sql.AppendLine(", @NRO_CTE");
+                sql.AppendLine(", @OBS");
+                sql.AppendLine(", @MONTO_ORIGINAL");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@FECHA_CAE", obj.FECHA_CAE);
+                    cmd.Parameters.AddWithValue("@RAZON_SOCIAL", obj.RAZON_SOCIAL);
+                    cmd.Parameters.AddWithValue("@PTO_VTA", obj.PTO_VTA);
+                    cmd.Parameters.AddWithValue("@NRO_CTE", obj.NRO_CTE);
+                    cmd.Parameters.AddWithValue("@OBS", obj.OBS);
+                    cmd.Parameters.AddWithValue("@MONTO_ORIGINAL", obj.MONTO_ORIGINAL);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(IVA_COMPRAS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  IVA_COMPRAS SET");
+                sql.AppendLine("FECHA_CAE=@FECHA_CAE");
+                sql.AppendLine(", RAZON_SOCIAL=@RAZON_SOCIAL");
+                sql.AppendLine(", PTO_VTA=@PTO_VTA");
+                sql.AppendLine(", NRO_CTE=@NRO_CTE");
+                sql.AppendLine(", OBS=@OBS");
+                sql.AppendLine(", MONTO_ORIGINAL=@MONTO_ORIGINAL");
+                sql.AppendLine("WHERE");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@FECHA_CAE", obj.FECHA_CAE);
+                    cmd.Parameters.AddWithValue("@RAZON_SOCIAL", obj.RAZON_SOCIAL);
+                    cmd.Parameters.AddWithValue("@PTO_VTA", obj.PTO_VTA);
+                    cmd.Parameters.AddWithValue("@NRO_CTE", obj.NRO_CTE);
+                    cmd.Parameters.AddWithValue("@OBS", obj.OBS);
+                    cmd.Parameters.AddWithValue("@MONTO_ORIGINAL", obj.MONTO_ORIGINAL);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(IVA_COMPRAS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  IVA_COMPRAS ");
+                sql.AppendLine("WHERE");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+

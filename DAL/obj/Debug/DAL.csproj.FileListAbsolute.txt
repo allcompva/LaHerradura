@@ -1,0 +1,17 @@
+D:\NET 2018\LH\LH\DAL\bin\Debug\DAL.dll.config
+D:\NET 2018\LH\LH\DAL\bin\Debug\DAL.dll
+D:\NET 2018\LH\LH\DAL\bin\Debug\DAL.pdb
+D:\NET 2018\LH\LH\DAL\bin\Debug\MercadoPago.dll
+D:\NET 2018\LH\LH\DAL\bin\Debug\Newtonsoft.Json.dll
+D:\NET 2018\LH\LH\DAL\bin\Debug\nunit.framework.dll
+D:\NET 2018\LH\LH\DAL\bin\Debug\ObjectDumper.dll
+D:\NET 2018\LH\LH\DAL\bin\Debug\RestSharp.dll
+D:\NET 2018\LH\LH\DAL\bin\Debug\Newtonsoft.Json.xml
+D:\NET 2018\LH\LH\DAL\bin\Debug\nunit.framework.pdb
+D:\NET 2018\LH\LH\DAL\bin\Debug\nunit.framework.xml
+D:\NET 2018\LH\LH\DAL\bin\Debug\RestSharp.xml
+D:\NET 2018\LH\LH\DAL\obj\Debug\DAL.csproj.CoreCompileInputs.cache
+D:\NET 2018\LH\LH\DAL\obj\Debug\DAL.csproj.CopyComplete
+D:\NET 2018\LH\LH\DAL\obj\Debug\DAL.dll
+D:\NET 2018\LH\LH\DAL\obj\Debug\DAL.pdb
+D:\NET 2018\LH\LH\DAL\obj\Debug\DAL.csprojAssemblyReference.cache

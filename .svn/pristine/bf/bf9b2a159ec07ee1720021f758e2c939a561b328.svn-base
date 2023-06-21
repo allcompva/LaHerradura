@@ -1,0 +1,657 @@
+﻿using LaHerradura.AFIPHomo;
+using LaHerradura.FEProd;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Transactions;
+using System.Web;
+
+namespace LaHerradura
+{
+    public class CTA_CTE
+    {
+        public static void asientaPago(List<DAL.CTACTE_EXPENSAS> lst,
+            List<DAL.PAGOS_X_FACTURA> lstPagos, DateTime fechaPago)
+        {
+            try
+            {
+                using (TransactionScope scope = new TransactionScope())
+                {
+                    //DAL.PLANILLA_CAJA objPlanilla = DAL.PLANILLA_CAJA.getByEstado(0);
+                    int nroRecibo = DAL.CTACTE_EXPENSAS.getMaxNroRecibo() + 1;
+                    foreach (var item in lst)
+                    {
+                        if (item.PAGO_TOTAL)
+                        {
+                            asientaPagoCompleto(item, nroRecibo, fechaPago);
+                        }
+                        else
+                        {
+                            asientaPagoCta(item, fechaPago, nroRecibo);
+                        }
+                    }
+                    foreach (var item in lstPagos)
+                    {
+                        item.ID_FACTURA = nroRecibo;
+                        item.FECHA = lst[0].FECHA;
+
+                        if (item.ID_PLAN_PAGO == 7)
+                        {
+                            int nroCta = lst[0].NRO_CTA;
+                            decimal monto = item.MONTO;
+
+                            DAL.MOV_BILLETERA obj = new DAL.MOV_BILLETERA();
+                            obj.FECHA = DateTime.Now;
+                            DAL.PERSONAS_X_INMUEBLES objPer =
+                                DAL.PERSONAS_X_INMUEBLES.getByNroCta(lst[0].NRO_CTA);
+                            obj.ID_PERSONA = objPer.ID_PERSONA;
+                            obj.MONTO = monto;
+                            obj.NRO_CTA = lst[0].NRO_CTA;
+                            obj.NRO_RECIBO = nroRecibo;
+                            obj.TIPO_MOVIMIENTO = 2;
+                            DAL.MOV_BILLETERA.insert(obj);
+                            DAL.BILLETERA.setSaldo(nroCta, monto - (monto * 2));
+                        }
+                        DAL.PAGOS_X_FACTURA.insert(item);
+                        if (item.ID_PLAN_PAGO != 7)
+                        {
+                            //MOVIMIENTO DE CAJA
+                            DAL.TB_MOVIM_CAJA objMovim = new DAL.TB_MOVIM_CAJA();
+                            objMovim.DETALLE = string.Format(
+                                "Pago expensa cuenta nro.: {0} - Recibio Nro.: {1}",
+                                lst[0].NRO_CTA, nroRecibo);
+                            objMovim.ID_FACTURA = nroRecibo;
+                            objMovim.HORA = item.FECHA;
+                            objMovim.ID_CAJA = 1;
+                            //objMovim.ID_PLANILLA = objPlanilla.ID;
+                            objMovim.ID_PLANILLA = 0;
+                            switch (item.ID_PLAN_PAGO)
+                            {
+                                case 1:
+                                    objMovim.ID_CTA_INGRESO = 1;
+                                    objMovim.ID_CTA_EGRESO = 1;
+                                    break;
+                                case 2:
+                                    objMovim.ID_CTA_INGRESO = 2;
+                                    objMovim.ID_CTA_EGRESO = 2;
+                                    break;
+                                default:
+                                    objMovim.ID_CTA_INGRESO = 7;
+                                    objMovim.ID_CTA_EGRESO = 7;
+                                    break;
+                            }
+
+                            objMovim.ID_RESPONSABLE = item.USUARIO;
+                            objMovim.ID_USUARIO = item.USUARIO;
+                            objMovim.MONTO = item.MONTO;
+                            objMovim.ID_FACTURA = item.ID;
+                            objMovim.TIPO_MOV = 1;
+                            objMovim.ID_SUCURSAL = 1;
+                            DAL.TB_MOVIM_CAJA.insert(objMovim);
+                        }
+                    }
+                    if (lstPagos.Sum(p => p.MONTO) > lst.Sum(p => p.MONTO_PAGADO))
+                    {
+                        int nroCta = lst[0].NRO_CTA;
+                        decimal monto =
+                            lstPagos.Sum(p => p.MONTO) - lst.Sum(p => p.MONTO_PAGADO);
+                        DAL.MOV_BILLETERA obj = new DAL.MOV_BILLETERA();
+                        obj.FECHA = DateTime.Now;
+                        DAL.PERSONAS_X_INMUEBLES objPer =
+                            DAL.PERSONAS_X_INMUEBLES.getByNroCta(lst[0].NRO_CTA);
+                        obj.ID_PERSONA = objPer.ID_PERSONA;
+                        obj.MONTO =
+                            lstPagos.Sum(p => p.MONTO) - lst.Sum(p => p.MONTO_PAGADO);
+                        obj.NRO_CTA = lst[0].NRO_CTA;
+                        obj.NRO_RECIBO = nroRecibo;
+                        obj.TIPO_MOVIMIENTO = 1;
+                        DAL.MOV_BILLETERA.insert(obj);
+                        DAL.BILLETERA.setSaldo(nroCta, monto);
+
+                    }
+                    scope.Complete();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
+        //Ver de mejorar esta forma de pagos de capital e intereses
+        //Por definiciones va quedar asi:
+        //Si es pago parcial el monto cubre intereses y lo que quede va a parar el capital
+        public static void asientaPagoCta(DAL.CTACTE_EXPENSAS obj,
+            DateTime fechaPago, int nroRecibo)
+        {
+            try
+            {
+                decimal porc_pago = 0;
+                decimal capital_pagado = 0;
+                decimal interes_pagado = 0;
+                decimal saldo_capital = 0;
+                decimal saldo_interes = 0;
+                //if (obj.INTERES_MORA > 0)
+                //{
+                porc_pago = obj.MONTO_PAGADO / obj.SALDO;
+                capital_pagado = obj.SALDO_CAPITAL * porc_pago;
+                interes_pagado = obj.INTERES_MORA * porc_pago;
+                saldo_capital = obj.SALDO_CAPITAL - capital_pagado;
+                saldo_interes = obj.SALDO_INTERES - interes_pagado;
+                //}
+                //else
+                //{
+                //    capital_pagado = obj.MONTO_PAGADO;
+                //    saldo_capital = obj.SALDO_CAPITAL - capital_pagado;
+                //}
+                DAL.CTACTE_EXPENSAS objMov2 = new DAL.CTACTE_EXPENSAS();
+                objMov2.FECHA = fechaPago;
+                objMov2.CAPITAL_PAGADO = capital_pagado;
+                objMov2.HABER = obj.MONTO_PAGADO;
+                objMov2.INTERES_MORA = obj.INTERES_MORA;
+                objMov2.INTERES_PAGADO = interes_pagado;
+                objMov2.NRO_CTA = obj.NRO_CTA;
+                objMov2.NRO_RECIBO_PAGO = nroRecibo;
+                objMov2.PERIODO = obj.PERIODO;
+                objMov2.SALDO_CAPITAL = saldo_capital;
+                objMov2.ID_MEDIO_PAGO = obj.ID_MEDIO_PAGO;
+                objMov2.SALDO_INTERES = saldo_interes;
+                objMov2.VENCIMIENTO = obj.VENCIMIENTO;
+                objMov2.TIPO_MOVIMIENTO = 2;
+                objMov2.NRO_CUOTA = obj.NRO_CUOTA;
+                objMov2.NRO_PLAN_PAGO = obj.NRO_PLAN_PAGO;
+                objMov2.ID_USUARIO_PAGA = obj.ID_USUARIO_PAGA;
+                DAL.CTACTE_EXPENSAS.asientoPago(objMov2);
+
+                DAL.CTACTE_EXPENSAS objMov1 = new DAL.CTACTE_EXPENSAS();
+                objMov1.ID = obj.ID;
+                obj.NRO_RECIBO_PAGO = nroRecibo;
+                objMov1.PAGADO = false;
+                objMov1.FECHA_ULTIMO_PAGO = fechaPago;
+                objMov1.CAPITAL_PAGADO = obj.CAPITAL_PAGADO + capital_pagado;
+                objMov1.INTERES_PAGADO = obj.INTERES_PAGADO + interes_pagado;
+                objMov1.SALDO_CAPITAL = saldo_capital;
+                objMov1.SALDO_INTERES = saldo_interes;
+                objMov1.INTERES_MORA = 0;
+                objMov1.DEBE = saldo_capital + saldo_interes;
+                objMov1.SALDO = saldo_capital + saldo_interes;
+                objMov1.PAGO_A_CTA = obj.PAGO_A_CTA + obj.MONTO_PAGADO;
+                objMov1.ID_MEDIO_PAGO = obj.ID_MEDIO_PAGO;
+                DAL.CTACTE_EXPENSAS.asientoPagoCtaMov1(objMov1);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void asientaPagoMaivo(List<DAL.CTACTE_EXPENSAS> lst, string path)
+        {
+            try
+            {
+                using (TransactionScope scope = new TransactionScope())
+                {
+                    int nroRecibo = DAL.CTACTE_EXPENSAS.getMaxNroRecibo() + 1;
+                    int primerRecibo = nroRecibo;
+                    foreach (var item in lst)
+                    {
+                        DAL.LIQUIDACION_EXPENSAS objLiq = DAL.LIQUIDACION_EXPENSAS.getByPk(item.PERIODO);
+                        DAL.PERSONAS_X_INMUEBLES objP = DAL.PERSONAS_X_INMUEBLES.getByNroCta(
+                            item.NRO_CTA);
+                        //DAL.PERSONAS persona = DAL.PERSONAS.getByPk(objP.ID_PERSONA);
+                        //ACTUALIZA CTACTE CON TIPO_MOVIMIENTO = 1 
+                        DAL.CTACTE_EXPENSAS.asientoPagoMasivo(item.ID, nroRecibo);
+                        item.NRO_RECIBO_PAGO = nroRecibo;
+                        DAL.CTACTE_EXPENSAS obj = new DAL.CTACTE_EXPENSAS();
+                        obj.TIPO_MOVIMIENTO = 2;
+                        obj.PERIODO = item.PERIODO;
+                        obj.NRO_CTA = item.NRO_CTA;
+                        obj.HABER = item.SALDO;
+                        obj.FECHA = item.FECHA;
+                        obj.ID_MEDIO_PAGO = item.ID_MEDIO_PAGO;
+                        obj.INTERES_MORA = item.INTERES_MORA;
+                        obj.DESC_VENCIMIENTO = item.DESC_VENCIMIENTO;
+                        obj.NRO_RECIBO_PAGO = nroRecibo;
+                        obj.VENCIMIENTO = item.VENCIMIENTO;
+
+
+                        obj.MONTO_ORIGINAL = item.MONTO_ORIGINAL;
+                        //INSERTA EN CTACTE TIPO_MOVIMIENTO = 2
+                        DAL.CTACTE_EXPENSAS.asientoPago(obj);
+
+
+                        if (item.DESC_VENCIMIENTO > 0)
+                        {
+                            //FEProd.CbteAsoc cbteAsoc = new FEProd.CbteAsoc();
+                            //cbteAsoc.Nro = item.NRO_CTE;
+                            //cbteAsoc.PtoVta = item.PTO_VTA;
+                            //cbteAsoc.Tipo = 11;
+                            //FECAEResponse cae = null;
+                            //Int64 cuit = 0;
+                            //if (objP.CUIT != null)
+                            //    if (objP.CUIT.Length > 5)
+                            //        cuit = Int64.Parse(objP.CUIT);
+
+                            //cae = FE_AFIP.AutorizaCAENotaCredito_C(item.PTO_VTA, 1, 1,
+                            //    cuit, Convert.ToInt64(
+                            //        obj.DESC_VENCIMIENTO), 13, path, cbteAsoc);
+
+                            //if (cae != null)
+                            //{
+                            //    if (cae.FeDetResp[0].Resultado == "A")
+                            //    {
+                            //        DAL.FACTURAS_X_EXPENSA factu = new DAL.FACTURAS_X_EXPENSA();
+                            //        factu.CAE = Convert.ToInt64(cae.FeDetResp[0].CAE);
+
+                            //        factu.FECHA_CAE = new DateTime(int.Parse(cae.FeDetResp[0].CbteFch.Substring(0, 4)),
+                            //            int.Parse(cae.FeDetResp[0].CbteFch.Substring(4, 2)),
+                            //            int.Parse(cae.FeDetResp[0].CbteFch.Substring(6, 2)));
+                            //        factu.ID_CTACTE = item.ID;
+                            //        factu.NRO_CTA = item.NRO_CTA;
+                            //        factu.NRO_CTE = cae.FeDetResp[0].CbteDesde;
+                            //        factu.PERIODO = item.PERIODO;
+                            //        factu.PTO_VTA = item.PTO_VTA;
+                            //        factu.VENC_CAE = new DateTime(int.Parse(cae.FeDetResp[0].CAEFchVto.Substring(0, 4)),
+                            //            int.Parse(cae.FeDetResp[0].CAEFchVto.Substring(4, 2)),
+                            //            int.Parse(cae.FeDetResp[0].CAEFchVto.Substring(6, 2)));
+                            //        factu.TIPO_COMPROBANTE = 13;
+                            //        factu.MONTO = item.DESC_VENCIMIENTO;
+                            //        string venc = string.Empty;
+                            //        if (item.VENCIMIENTO.ToShortDateString() ==
+                            //            objLiq.VENCIMIENTO_1.ToShortDateString())
+                            //        {
+                            //            venc = "Primer vencimiento";
+                            //        }
+                            //        if (item.VENCIMIENTO.ToShortDateString() ==
+                            //            objLiq.VENCIMIENTO_2.ToShortDateString())
+                            //        {
+                            //            venc = "Segundo vencimiento";
+                            //        }
+                            //        factu.DETALLE = string.Format(
+                            //            "Descuento pago en termino {0} expensa periodo {1}-{2}/{3} Factura {4}-{5}",
+                            //            venc, item.PERIODO.ToString().Substring(0, 4),
+                            //            item.PERIODO.ToString().Substring(4, 2),
+                            //            item.PERIODO.ToString().Substring(6, 2),
+                            //            item.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                            //            item.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0")));
+
+                            //        factu.ID_COMPROBANTE = nroRecibo;
+                            //        //INSERTA NOTA DE CREDITO
+                            //        DAL.FACTURAS_X_EXPENSA.insert(factu);
+
+                            //    }
+                            //}
+                        }
+
+                        DAL.PAGOS_X_FACTURA objPagos = new DAL.PAGOS_X_FACTURA();
+                        objPagos.FECHA = item.FECHA;
+                        objPagos.ID_FACTURA = nroRecibo;
+                        objPagos.ID_PLAN_PAGO = item.ID_MEDIO_PAGO;
+                        objPagos.MONTO = item.HABER;
+                        DAL.PAGOS_X_FACTURA.insert(objPagos);
+
+                        //MOVIMIENTO DE CAJA
+                        DAL.TB_MOVIM_CAJA objMovim = new DAL.TB_MOVIM_CAJA();
+                        objMovim.DETALLE = string.Format(
+                            "Pago expensa cuenta nro.: {0} - Recibio Nro.: {1}",
+                            lst[0].NRO_CTA, nroRecibo);
+                        objMovim.ID_FACTURA = nroRecibo;
+                        objMovim.HORA = item.FECHA;
+                        objMovim.ID_CAJA = 1;
+                        //objMovim.ID_PLANILLA = objPlanilla.ID;
+                        objMovim.ID_PLANILLA = 0;
+
+                        objMovim.ID_CTA_INGRESO = 7;
+                        objMovim.ID_CTA_EGRESO = 7;
+
+
+                        objMovim.ID_RESPONSABLE = 1;
+                        objMovim.ID_USUARIO = 1;
+                        objMovim.MONTO = item.HABER;
+                        objMovim.ID_FACTURA = item.ID;
+                        objMovim.TIPO_MOV = 1;
+                        objMovim.ID_SUCURSAL = 1;
+                        DAL.TB_MOVIM_CAJA.insert(objMovim);
+
+                        nroRecibo++;
+                    }
+
+
+                    scope.Complete();
+                }
+
+                foreach (var item in lst)
+                {
+                    List<DAL.PERSONAS_GRILLA> lstPer =
+                        DAL.PERSONAS_GRILLA.getByNroCta(item.NRO_CTA);
+                    string propietarios = string.Empty;
+                    foreach (var item2 in lstPer)
+                    {
+                        if (item2.RESPONSABLE_FACTURACION)
+                        {
+                            propietarios += string.Format("{0}, ", item2.NOMBRE);
+                        }
+                    }
+                    List<string> lstMail = new List<string>();
+                    List<DAL.MAIL_X_CTAS> ls = DAL.MAIL_X_CTAS.getByCta(item.NRO_CTA);
+                    foreach (var item2 in ls)
+                    {
+                        lstMail.Add(item2.MAIL);
+                    }
+
+                    //Back.mail.reciboPago(lstMail, propietarios,
+                    //item.FECHA, item.DEBE, item.NRO_RECIBO_PAGO);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void asientaPagoCompleto(DAL.CTACTE_EXPENSAS obj,
+            int nroRecibo, DateTime fechaPago)
+        {
+            try
+            {
+                decimal capital_pagado = 0;
+                decimal interes_pagado = 0;
+                decimal saldo_capital = 0;
+                decimal saldo_interes = 0;
+                if (obj.INTERES_MORA > 0)
+                {
+                    capital_pagado = obj.SALDO_CAPITAL;
+                    interes_pagado = obj.INTERES_MORA;
+                    saldo_capital = 0;
+                    saldo_interes = 0;
+                }
+                else
+                {
+                    capital_pagado = obj.MONTO_PAGADO;
+                    saldo_capital = 0;
+                    saldo_interes = 0;
+                }
+
+                DAL.CTACTE_EXPENSAS objMov2 = new DAL.CTACTE_EXPENSAS();
+                objMov2.FECHA = fechaPago;
+                objMov2.CAPITAL_PAGADO = obj.SALDO_CAPITAL;
+                objMov2.HABER = obj.MONTO_PAGADO;
+                objMov2.INTERES_MORA = obj.INTERES_MORA;
+                objMov2.INTERES_PAGADO = obj.INTERES_MORA;
+                objMov2.NRO_CTA = obj.NRO_CTA;
+                objMov2.NRO_RECIBO_PAGO = nroRecibo;
+                objMov2.PERIODO = obj.PERIODO;
+                objMov2.SALDO_CAPITAL = 0;
+                objMov2.SALDO_INTERES = 0;
+                objMov2.ID_MEDIO_PAGO = obj.ID_MEDIO_PAGO;
+                objMov2.VENCIMIENTO = obj.VENCIMIENTO;
+                objMov2.ID_MEDIO_PAGO = obj.ID_MEDIO_PAGO;
+                objMov2.TIPO_MOVIMIENTO = 2;
+                objMov2.NRO_CUOTA = obj.NRO_CUOTA;
+                objMov2.NRO_PLAN_PAGO = obj.NRO_PLAN_PAGO;
+                objMov2.ID_USUARIO_PAGA = obj.ID_USUARIO_PAGA;
+                DAL.CTACTE_EXPENSAS.asientoPago(objMov2);
+
+                DAL.CTACTE_EXPENSAS objMov1 = new DAL.CTACTE_EXPENSAS();
+                objMov1.ID = obj.ID;
+                obj.NRO_RECIBO_PAGO = nroRecibo;
+                objMov1.PAGADO = true;
+                objMov1.FECHA_ULTIMO_PAGO = fechaPago;
+                objMov1.CAPITAL_PAGADO = obj.CAPITAL_PAGADO + capital_pagado;
+                objMov1.INTERES_PAGADO = obj.INTERES_PAGADO + interes_pagado;
+                objMov1.SALDO_CAPITAL = 0;
+                objMov1.SALDO_INTERES = 0;
+                objMov1.INTERES_MORA = 0;
+                objMov1.DEBE = 0;
+                objMov1.SALDO = 0;
+                objMov1.ID_MEDIO_PAGO = obj.ID_MEDIO_PAGO;
+                objMov1.PAGO_A_CTA = obj.PAGO_A_CTA + obj.MONTO_PAGADO;
+                objMov1.ID_MEDIO_PAGO = obj.ID_MEDIO_PAGO;
+                DAL.CTACTE_EXPENSAS.asientoPagoCtaMov1(objMov1);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void asientaPago(List<DAL.CTACTE_EXPENSAS> lst, string path,
+            List<DAL.PAGOS_X_FACTURA> lstPagos, DateTime fechaPago)
+        {
+            try
+            {
+                decimal totalPagado = lstPagos.Sum(p => p.MONTO);
+                decimal resto = totalPagado;
+                decimal saldoCubrir = 0;
+                int nroCta = 0;
+                int nroRecibo = DAL.CTACTE_EXPENSAS.getMaxNroRecibo() + 1;
+                DateTime fecha = DateTime.Now;
+                using (TransactionScope scope = new TransactionScope())
+                {
+                    int primerRecibo = nroRecibo;
+                    if (lst.Count > 1)
+                        lst = lst.OrderBy(o => o.SALDO).ToList();
+
+                    decimal totalCubrir = lst.Sum(p => p.SALDO - p.DESC_VENCIMIENTO - p.PAGO_A_CTA);
+                    decimal totalAbonado = lstPagos.Sum(p => p.MONTO);
+                    if (totalAbonado > totalCubrir)
+                    {
+                        DAL.MOV_BILLETERA obj = new DAL.MOV_BILLETERA();
+                        obj.FECHA = fecha;
+                        obj.ID_PERSONA = 0;
+                    }
+
+                    foreach (var item in lst)
+                    {
+                        fecha = item.FECHA;
+                        DAL.LIQUIDACION_EXPENSAS objLiq = DAL.LIQUIDACION_EXPENSAS.getByPk(item.PERIODO);
+                        DAL.PERSONAS_X_INMUEBLES objP = DAL.PERSONAS_X_INMUEBLES.getByNroCta(
+                            item.NRO_CTA);
+                        DAL.PERSONAS persona = DAL.PERSONAS.getByPk(objP.ID_PERSONA);
+                        //ACTUALIZA CTA
+                        if (item.SALDO == 0)
+                        {
+                            DAL.CTACTE_EXPENSAS.asientoPago(item.ID, nroRecibo, item.SALDO,
+                                fechaPago, 0, 0, 0, 0);
+                            resto = resto - (item.DEBE - item.DESC_VENCIMIENTO - item.PAGO_A_CTA);
+                        }
+                        else
+                        {
+                            DAL.CTACTE_EXPENSAS.asientoPago(item.ID, nroRecibo, item.DEBE,
+                                fechaPago, resto, item.SALDO_CAPITAL, item.SALDO_INTERES, item.PAGO_A_CTA);
+
+                            DAL.CTACTE_EXPENSAS.recalculo(item.FECHA, item.PERIODO, item.NRO_CTA, item.ID);
+                        }
+                        saldoCubrir = item.DEBE - item.DESC_VENCIMIENTO - item.PAGO_A_CTA;
+                        if (item.SALDO == 0)
+                        {
+                            DAL.CTACTE_EXPENSAS obj = new DAL.CTACTE_EXPENSAS();
+                            obj.NRO_CTA = item.NRO_CTA;
+                            obj.TIPO_MOVIMIENTO = 2;
+                            obj.PERIODO = item.PERIODO;
+                            obj.MONTO_ORIGINAL = item.MONTO_ORIGINAL;
+                            obj.DEBE = 0;
+                            obj.HABER = saldoCubrir;
+                            obj.SALDO = 0;
+                            obj.FECHA = item.FECHA;
+                            obj.VENCIMIENTO = item.VENCIMIENTO;
+                            obj.INTERES_MORA = item.INTERES_MORA;
+                            obj.DESC_VENCIMIENTO = item.DESC_VENCIMIENTO;
+                            obj.ID_MEDIO_PAGO = item.ID_MEDIO_PAGO;
+                            obj.NRO_RECIBO_PAGO = nroRecibo;
+                            nroCta = item.NRO_CTA;
+                            //INSERTA TIPO_MOV 2 EN CTA
+                            DAL.CTACTE_EXPENSAS.asientoPago(obj);
+                        }
+                        else
+                        {
+                            DAL.CTACTE_EXPENSAS obj = new DAL.CTACTE_EXPENSAS();
+                            obj.NRO_CTA = item.NRO_CTA;
+                            obj.TIPO_MOVIMIENTO = 2;
+                            obj.PERIODO = item.PERIODO;
+                            obj.MONTO_ORIGINAL = item.MONTO_ORIGINAL;
+                            obj.DEBE = item.DEBE - resto;
+                            obj.HABER = resto;
+                            obj.SALDO = item.DEBE - resto;
+                            obj.FECHA = item.FECHA;
+                            obj.VENCIMIENTO = item.VENCIMIENTO;
+                            obj.INTERES_MORA = item.INTERES_MORA;
+                            obj.DESC_VENCIMIENTO = item.DESC_VENCIMIENTO;
+                            obj.ID_MEDIO_PAGO = item.ID_MEDIO_PAGO;
+                            obj.NRO_RECIBO_PAGO = nroRecibo;
+                            nroCta = item.NRO_CTA;
+                            //INSERTA TIPO_MOV 2 EN CTA
+                            DAL.CTACTE_EXPENSAS.asientoPago(obj);
+
+
+                        }
+
+                        if (item.SALDO == 0)
+                        {
+                            if (item.DESC_VENCIMIENTO > 0)
+                            {
+                                FEProd.CbteAsoc cbteAsoc = new FEProd.CbteAsoc();
+                                cbteAsoc.Nro = item.NRO_CTE;
+                                cbteAsoc.PtoVta = item.PTO_VTA;
+                                cbteAsoc.Tipo = 11;
+                                FECAEResponse cae = null;
+
+                                //cae = FE_AFIP.AutorizaCAENotaDebito_C(item.PTO_VTA, 1, 1,
+                                //    Convert.ToInt64(objP.CUIT), Convert.ToInt64(
+                                //        item.DESC_VENCIMIENTO), 13, path, cbteAsoc);
+
+                                if (cae != null)
+                                {
+                                    if (cae.FeDetResp[0].Resultado == "A")
+                                    {
+                                        DAL.FACTURAS_X_EXPENSA factu = new DAL.FACTURAS_X_EXPENSA();
+                                        factu.CAE = Convert.ToInt64(cae.FeDetResp[0].CAE);
+
+                                        factu.FECHA_CAE = new DateTime(int.Parse(cae.FeDetResp[0].CbteFch.Substring(0, 4)),
+                                            int.Parse(cae.FeDetResp[0].CbteFch.Substring(4, 2)),
+                                            int.Parse(cae.FeDetResp[0].CbteFch.Substring(6, 2)));
+                                        factu.ID_CTACTE = item.ID;
+                                        factu.NRO_CTA = item.NRO_CTA;
+                                        factu.NRO_CTE = cae.FeDetResp[0].CbteDesde;
+                                        factu.PERIODO = item.PERIODO;
+                                        factu.PTO_VTA = item.PTO_VTA;
+                                        factu.VENC_CAE = new DateTime(int.Parse(cae.FeDetResp[0].CAEFchVto.Substring(0, 4)),
+                                            int.Parse(cae.FeDetResp[0].CAEFchVto.Substring(4, 2)),
+                                            int.Parse(cae.FeDetResp[0].CAEFchVto.Substring(6, 2)));
+                                        factu.TIPO_COMPROBANTE = 13;
+                                        factu.MONTO = item.DESC_VENCIMIENTO;
+                                        string venc = string.Empty;
+                                        if (item.VENCIMIENTO.ToShortDateString() ==
+                                            objLiq.VENCIMIENTO_1.ToShortDateString())
+                                        {
+                                            venc = "Primer vencimiento";
+                                        }
+                                        if (item.VENCIMIENTO.ToShortDateString() ==
+                                            objLiq.VENCIMIENTO_2.ToShortDateString())
+                                        {
+                                            venc = "Segundo vencimiento";
+                                        }
+                                        factu.DETALLE = string.Format(
+                                            "Descuento pago en termino {0} expensa periodo {1}-{2}/{3} Factura {4}-{5}",
+                                            venc, item.PERIODO.ToString().Substring(0, 4),
+                                            item.PERIODO.ToString().Substring(4, 2),
+                                            item.PERIODO.ToString().Substring(6, 2),
+                                            item.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                                            item.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0")));
+
+                                        factu.ID_COMPROBANTE = nroRecibo;
+                                        DAL.FACTURAS_X_EXPENSA.insert(factu);
+
+                                    }
+                                }
+                            }
+
+                            if (item.INTERES_MORA > 0)
+                            {
+
+                                FECAEResponse cae = null;
+
+                                List<DAL.CTACTE_EXPENSAS> lstF = new List<DAL.CTACTE_EXPENSAS>();
+                                DAL.CTACTE_EXPENSAS objF = new DAL.CTACTE_EXPENSAS();
+                                objF.MONTO_ORIGINAL = item.INTERES_MORA;
+                                objF.NRO_CUIT = item.NRO_CUIT;
+
+                                lstF.Add(objF);
+
+                                //cae = FE_AFIP.AutorizaCAE_C(item.PTO_VTA, 1, lstF, 11, path);
+
+                                if (cae != null)
+                                {
+                                    if (cae.FeDetResp[0].Resultado == "A")
+                                    {
+                                        DAL.FACTURAS_X_EXPENSA factu = new DAL.FACTURAS_X_EXPENSA();
+                                        factu.CAE = Convert.ToInt64(cae.FeDetResp[0].CAE);
+
+                                        factu.FECHA_CAE = new DateTime(int.Parse(cae.FeDetResp[0].CbteFch.Substring(0, 4)),
+                                            int.Parse(cae.FeDetResp[0].CbteFch.Substring(4, 2)),
+                                            int.Parse(cae.FeDetResp[0].CbteFch.Substring(6, 2)));
+                                        factu.ID_CTACTE = item.ID;
+                                        factu.NRO_CTA = item.NRO_CTA;
+                                        factu.NRO_CTE = cae.FeDetResp[0].CbteDesde;
+                                        factu.PERIODO = item.PERIODO;
+                                        factu.PTO_VTA = item.PTO_VTA;
+                                        factu.VENC_CAE = new DateTime(int.Parse(cae.FeDetResp[0].CAEFchVto.Substring(0, 4)),
+                                            int.Parse(cae.FeDetResp[0].CAEFchVto.Substring(4, 2)),
+                                            int.Parse(cae.FeDetResp[0].CAEFchVto.Substring(6, 2)));
+                                        factu.TIPO_COMPROBANTE = 11;
+                                        factu.MONTO = item.INTERES_MORA;
+
+                                        factu.DETALLE = string.Format(
+                                            "Interes por mora expensa periodo {0} Factura {1}-{2}",
+                                            item.PERIODO,
+                                            item.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                                            item.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0")));
+
+                                        factu.ID_COMPROBANTE = nroRecibo;
+
+                                        DAL.FACTURAS_X_EXPENSA.insert(factu);
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+
+                    foreach (var item in lstPagos)
+                    {
+                        item.ID_FACTURA = nroRecibo;
+                        item.FECHA = lst[0].FECHA;
+                        DAL.PAGOS_X_FACTURA.insert(item);
+                    }
+
+
+
+                    scope.Complete();
+                }
+                List<DAL.PERSONAS_GRILLA> lstPer = DAL.PERSONAS_GRILLA.getByNroCta(nroCta);
+                string propietarios = string.Empty;
+                foreach (var item in lstPer)
+                {
+                    if (item.RESPONSABLE_FACTURACION)
+                    {
+                        propietarios += string.Format("{0}, ", item.NOMBRE);
+                    }
+                }
+                List<string> lstMail = new List<string>();
+                List<DAL.MAIL_X_CTAS> ls = DAL.MAIL_X_CTAS.getByCta(nroCta);
+                foreach (var item2 in ls)
+                {
+                    lstMail.Add(item2.MAIL);
+                    //lstMail.Add("allcompva@gmail.com");
+                }
+
+                //Back.mail.reciboPago(lstMail, propietarios,
+                //    lstPagos[0].FECHA, lstPagos.Sum(h => h.MONTO), nroRecibo);
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

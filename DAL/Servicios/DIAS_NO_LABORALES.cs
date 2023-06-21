@@ -1,0 +1,142 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace DAL.Carnets
+{
+    public class DIAS_NO_LABORALES:DALBase
+    {
+        public DateTime FECHA { get; set; }
+        public string MOTIVO { get; set; }
+
+        public DIAS_NO_LABORALES()
+        {
+            FECHA = UTILS.getFechaActual();
+            MOTIVO = string.Empty;
+        }
+
+
+        public static List<DIAS_NO_LABORALES> read()
+        {
+            try
+            {
+                List<DIAS_NO_LABORALES> lst = new List<DIAS_NO_LABORALES>();
+                DIAS_NO_LABORALES obj;
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM DIAS_NO_LABORALES ORDER BY FECHA";
+                    cmd.Connection.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    if (dr.HasRows)
+                    {
+
+                        while (dr.Read())
+                        {
+                            obj = new DIAS_NO_LABORALES();
+                            if (!dr.IsDBNull(0)) { obj.FECHA = dr.GetDateTime(0); }
+                            if (!dr.IsDBNull(0)) { obj.MOTIVO = dr.GetString(1); }
+                            lst.Add(obj);
+                        }
+                    }
+                }
+                return lst;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static DIAS_NO_LABORALES getByFecha(DateTime fecha)
+        {
+            try
+            {
+                DIAS_NO_LABORALES obj = null;
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM DIAS_NO_LABORALES WHERE FECHA = @FECHA ORDER BY FECHA";
+                    cmd.Parameters.AddWithValue("@FECHA", fecha);
+                    cmd.Connection.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    if (dr.HasRows)
+                    {
+
+                        while (dr.Read())
+                        {
+                            obj = new DIAS_NO_LABORALES();
+                            if (!dr.IsDBNull(0)) { obj.FECHA = dr.GetDateTime(0); }
+                            if (!dr.IsDBNull(0)) { obj.MOTIVO = dr.GetString(1); }
+                        }
+                    }
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void insert(DIAS_NO_LABORALES obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO DIAS_NO_LABORALES");
+                sql.AppendLine("(FECHA,MOTIVO)");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(@FECHA,@MOTIVO)");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@MOTIVO", obj.MOTIVO);
+                    cmd.Connection.Open();
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void delete(DateTime FECHA)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE DIAS_NO_LABORALES");
+                sql.AppendLine("WHERE FECHA=@FECHA");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@FECHA", FECHA);
+                    cmd.Connection.Open();
+
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

@@ -1,0 +1,241 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class EMPRESA : DALBase
+    {
+        public int ID { get; set; }
+        public string RAZON_SOCIAL { get; set; }
+        public string NOMBRE_FANTASIA { get; set; }
+        public string CUIT { get; set; }
+        public string ING_BRUTOS { get; set; }
+        public DateTime INICIO_ACTIVIDADES { get; set; }
+        public string CONDICION_IVA { get; set; }
+        public string IMPRESORA { get; set; }
+        public string DIRECCION { get; set; }
+        public string LOCALIDAD { get; set; }
+        public string PROVINCIA { get; set; }
+
+        public EMPRESA()
+        {
+            ID = 0;
+            RAZON_SOCIAL = string.Empty;
+            NOMBRE_FANTASIA = string.Empty;
+            CUIT = string.Empty;
+            ING_BRUTOS = string.Empty;
+            INICIO_ACTIVIDADES = UTILS.getFechaActual();
+            CONDICION_IVA = string.Empty;
+            IMPRESORA = string.Empty;
+            DIRECCION = string.Empty;
+            LOCALIDAD = string.Empty;
+            PROVINCIA = string.Empty;
+        }
+
+        private static List<EMPRESA> mapeo(SqlDataReader dr)
+        {
+            List<EMPRESA> lst = new List<EMPRESA>();
+            EMPRESA obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new EMPRESA();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.RAZON_SOCIAL = dr.GetString(1); }
+                    if (!dr.IsDBNull(2)) { obj.NOMBRE_FANTASIA = dr.GetString(2); }
+                    if (!dr.IsDBNull(3)) { obj.CUIT = dr.GetString(3); }
+                    if (!dr.IsDBNull(4)) { obj.ING_BRUTOS = dr.GetString(4); }
+                    if (!dr.IsDBNull(5)) { obj.INICIO_ACTIVIDADES = dr.GetDateTime(5); }
+                    if (!dr.IsDBNull(6)) { obj.CONDICION_IVA = dr.GetString(6); }
+                    if (!dr.IsDBNull(7)) { obj.IMPRESORA = dr.GetString(7); }
+                    if (!dr.IsDBNull(8)) { obj.DIRECCION = dr.GetString(8); }
+                    if (!dr.IsDBNull(9)) { obj.LOCALIDAD = dr.GetString(9); }
+                    if (!dr.IsDBNull(10)) { obj.PROVINCIA = dr.GetString(10); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<EMPRESA> read()
+        {
+            try
+            {
+                List<EMPRESA> lst = new List<EMPRESA>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM EMPRESA";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static EMPRESA getByPk(
+        int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM EMPRESA WHERE");
+                sql.AppendLine("ID = @ID");
+                EMPRESA obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<EMPRESA> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int insert(EMPRESA obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO EMPRESA(");
+                sql.AppendLine("RAZON_SOCIAL");
+                sql.AppendLine(", NOMBRE_FANTASIA");
+                sql.AppendLine(", CUIT");
+                sql.AppendLine(", ING_BRUTOS");
+                sql.AppendLine(", INICIO_ACTIVIDADES");
+                sql.AppendLine(", CONDICION_IVA");
+                sql.AppendLine(", IMPRESORA");
+                sql.AppendLine(", DIRECCION");
+                sql.AppendLine(", LOCALIDAD");
+                sql.AppendLine(", PROVINCIA");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@RAZON_SOCIAL");
+                sql.AppendLine(", @NOMBRE_FANTASIA");
+                sql.AppendLine(", @CUIT");
+                sql.AppendLine(", @ING_BRUTOS");
+                sql.AppendLine(", @INICIO_ACTIVIDADES");
+                sql.AppendLine(", @CONDICION_IVA");
+                sql.AppendLine(", @IMPRESORA");
+                sql.AppendLine(", @DIRECCION");
+                sql.AppendLine(", @LOCALIDAD");
+                sql.AppendLine(", @PROVINCIA");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@RAZON_SOCIAL", obj.RAZON_SOCIAL);
+                    cmd.Parameters.AddWithValue("@NOMBRE_FANTASIA", obj.NOMBRE_FANTASIA);
+                    cmd.Parameters.AddWithValue("@CUIT", obj.CUIT);
+                    cmd.Parameters.AddWithValue("@ING_BRUTOS", obj.ING_BRUTOS);
+                    cmd.Parameters.AddWithValue("@INICIO_ACTIVIDADES", obj.INICIO_ACTIVIDADES);
+                    cmd.Parameters.AddWithValue("@CONDICION_IVA", obj.CONDICION_IVA);
+                    cmd.Parameters.AddWithValue("@IMPRESORA", obj.IMPRESORA);
+                    cmd.Parameters.AddWithValue("@DIRECCION", obj.DIRECCION);
+                    cmd.Parameters.AddWithValue("@LOCALIDAD", obj.LOCALIDAD);
+                    cmd.Parameters.AddWithValue("@PROVINCIA", obj.PROVINCIA);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(EMPRESA obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  EMPRESA SET");
+                sql.AppendLine("RAZON_SOCIAL=@RAZON_SOCIAL");
+                sql.AppendLine(", NOMBRE_FANTASIA=@NOMBRE_FANTASIA");
+                sql.AppendLine(", CUIT=@CUIT");
+                sql.AppendLine(", ING_BRUTOS=@ING_BRUTOS");
+                sql.AppendLine(", INICIO_ACTIVIDADES=@INICIO_ACTIVIDADES");
+                sql.AppendLine(", CONDICION_IVA=@CONDICION_IVA");
+                sql.AppendLine(", IMPRESORA=@IMPRESORA");
+                sql.AppendLine(", DIRECCION=@DIRECCION");
+                sql.AppendLine(", LOCALIDAD=@LOCALIDAD");
+                sql.AppendLine(", PROVINCIA=@PROVINCIA");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@RAZON_SOCIAL", obj.RAZON_SOCIAL);
+                    cmd.Parameters.AddWithValue("@NOMBRE_FANTASIA", obj.NOMBRE_FANTASIA);
+                    cmd.Parameters.AddWithValue("@CUIT", obj.CUIT);
+                    cmd.Parameters.AddWithValue("@ING_BRUTOS", obj.ING_BRUTOS);
+                    cmd.Parameters.AddWithValue("@INICIO_ACTIVIDADES", obj.INICIO_ACTIVIDADES);
+                    cmd.Parameters.AddWithValue("@CONDICION_IVA", obj.CONDICION_IVA);
+                    cmd.Parameters.AddWithValue("@IMPRESORA", obj.IMPRESORA);
+                    cmd.Parameters.AddWithValue("@DIRECCION", obj.DIRECCION);
+                    cmd.Parameters.AddWithValue("@LOCALIDAD", obj.LOCALIDAD);
+                    cmd.Parameters.AddWithValue("@PROVINCIA", obj.PROVINCIA);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(EMPRESA obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  EMPRESA ");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", obj.ID);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+

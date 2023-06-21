@@ -1,0 +1,249 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class ASIENTOS : DALBase
+    {
+        public int ID { get; set; }
+        public int NRO { get; set; }
+        public DateTime FECHA { get; set; }
+        public int USUARIO { get; set; }
+        public string DESCRIPCION { get; set; }
+        public decimal MONTO { get; set; }
+        public int TIPO { get; set; }
+        public string REFERENCIA { get; set; }
+        public int EJERCICIO { get; set; }
+
+        public ASIENTOS()
+        {
+            ID = 0;
+            NRO = 0;
+            FECHA = DateTime.Now;
+            USUARIO = 0;
+            DESCRIPCION = string.Empty;
+            MONTO = 0;
+            TIPO = 0;
+            REFERENCIA = string.Empty;
+            EJERCICIO = 0;
+        }
+
+        private static List<ASIENTOS> mapeo(SqlDataReader dr)
+        {
+            List<ASIENTOS> lst = new List<ASIENTOS>();
+            ASIENTOS obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new ASIENTOS();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.NRO = dr.GetInt32(1); }
+                    if (!dr.IsDBNull(2)) { obj.FECHA = dr.GetDateTime(2); }
+                    if (!dr.IsDBNull(3)) { obj.USUARIO = dr.GetInt32(3); }
+                    if (!dr.IsDBNull(4)) { obj.DESCRIPCION = dr.GetString(4); }
+                    if (!dr.IsDBNull(5)) { obj.MONTO = dr.GetDecimal(5); }
+                    if (!dr.IsDBNull(6)) { obj.TIPO = dr.GetInt32(6); }
+                    if (!dr.IsDBNull(7)) { obj.REFERENCIA = dr.GetString(7); }
+                    if (!dr.IsDBNull(8)) { obj.EJERCICIO = dr.GetInt32(8); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<ASIENTOS> read()
+        {
+            try
+            {
+                List<ASIENTOS> lst = new List<ASIENTOS>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM ASIENTOS";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static ASIENTOS getByPk(
+        int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM ASIENTOS WHERE");
+                sql.AppendLine("ID = @ID");
+                ASIENTOS obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<ASIENTOS> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int getMaxAsiento(int mes, int anio)
+        {
+            try
+            {
+                int ultimo = 0;
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT isnull(MAX(NRO),0) FROM ASIENTOS");
+                sql.AppendLine("WHERE MONTH(FECHA)=@MES AND YEAR(FECHA)=@ANIO");
+                ASIENTOS obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@MES", mes);
+                    cmd.Parameters.AddWithValue("@ANIO", anio);
+                    cmd.Connection.Open();
+                    ultimo = Convert.ToInt32(cmd.ExecuteScalar());
+                }
+                return ultimo;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int insert(ASIENTOS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO ASIENTOS(");
+                sql.AppendLine("NRO");
+                sql.AppendLine(", FECHA");
+                sql.AppendLine(", USUARIO");
+                sql.AppendLine(", DESCRIPCION");
+                sql.AppendLine(", MONTO");
+                sql.AppendLine(", TIPO");
+                sql.AppendLine(", REFERENCIA");
+                sql.AppendLine(", EJERCICIO");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@NRO");
+                sql.AppendLine(", @FECHA");
+                sql.AppendLine(", @USUARIO");
+                sql.AppendLine(", @DESCRIPCION");
+                sql.AppendLine(", @MONTO");
+                sql.AppendLine(", @TIPO");
+                sql.AppendLine(", @REFERENCIA");
+                sql.AppendLine(", @EJERCICIO");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO", obj.NRO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@USUARIO", obj.USUARIO);
+                    cmd.Parameters.AddWithValue("@DESCRIPCION", obj.DESCRIPCION);
+                    cmd.Parameters.AddWithValue("@MONTO", obj.MONTO);
+                    cmd.Parameters.AddWithValue("@TIPO", obj.TIPO);
+                    cmd.Parameters.AddWithValue("@REFERENCIA", obj.REFERENCIA);
+                    cmd.Parameters.AddWithValue("@EJERCICIO", obj.EJERCICIO);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(ASIENTOS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  ASIENTOS SET");
+                sql.AppendLine("NRO=@NRO");
+                sql.AppendLine(", FECHA=@FECHA");
+                sql.AppendLine(", USUARIO=@USUARIO");
+                sql.AppendLine(", DESCRIPCION=@DESCRIPCION");
+                sql.AppendLine(", MONTO=@MONTO");
+                sql.AppendLine(", REFERENCIA=@REFERENCIA");
+                sql.AppendLine(", EJERCICIO=@EJERCICIO");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO", obj.NRO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@USUARIO", obj.USUARIO);
+                    cmd.Parameters.AddWithValue("@DESCRIPCION", obj.DESCRIPCION);
+                    cmd.Parameters.AddWithValue("@MONTO", obj.MONTO);
+                    cmd.Parameters.AddWithValue("@REFERENCIA", obj.REFERENCIA);
+                    cmd.Parameters.AddWithValue("@EJERCICIO", obj.EJERCICIO);
+                    cmd.Parameters.AddWithValue("@ID", obj.ID);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(int idAsiento)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  ASIENTOS ");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", idAsiento);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+

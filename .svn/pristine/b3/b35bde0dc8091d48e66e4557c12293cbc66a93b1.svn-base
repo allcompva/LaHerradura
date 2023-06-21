@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Para obtener más información sobre cómo configurar la aplicación ASP.NET, visite
+  https://go.microsoft.com/fwlink/?LinkId=169433
+  -->
+<configuration>
+  <configSections>
+    <sectionGroup name="applicationSettings" type="System.Configuration.ApplicationSettingsGroup, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+      <section name="LaHerradura.Properties.Settings" type="System.Configuration.ClientSettingsSection, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" requirePermission="false" />
+    </sectionGroup>
+  </configSections>
+  <appSettings>
+    <add key="ValidationSettings:UnobtrusiveValidationMode" value="None" />
+    <add key="CERTIFICADO" value="C:\\simplesoft\\certificado.pfx" />
+    <add key="PASS" value="LaHe2020" />
+    <add key="CUIT" value="30687557022" />
+    <add key="PtoVta" value="2" />
+  </appSettings>
+  <system.transactions>
+    <defaultSettings timeout="01:00:00" />
+  </system.transactions>
+  <connectionStrings>
+    <add name="DBMainAnt" connectionString="Data Source=sql.bsite.net\MSSQL2016;Initial Catalog=mvelez_;User ID=mvelez_;Password=Generallee31;Asynchronous Processing=True" />
+    <add name="DBMainLocal" connectionString="Data Source=NOTEBOOK-MARTIN\SQLEXPRESS;Initial Catalog=LH;Integrated Security=True" providerName="System.Data.SqlClient" />
+    <add name="DBMain" connectionString="workstation id=LHDBPrueba.mssql.somee.com;packet size=4096;user id=LAHERRADURA_SQLLogin_1;pwd=hc5ltdbt7w;data source=LHDBPrueba.mssql.somee.com;persist security info=False;initial catalog=LHDBPrueba
+" providerName="System.Data.SqlClient" />
+  </connectionStrings>
+  <system.web>
+    <globalization
+        culture="es-AR"
+        uiCulture="es-AR"
+    />
+    <pages maintainScrollPositionOnPostBack="true" />
+    <compilation debug="true" targetFramework="4.5.2">
+      <assemblies>
+        <add assembly="System.Web.DataVisualization, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31BF3856AD364E35" />
+      </assemblies>
+    </compilation>
+    <httpRuntime targetFramework="4.5" executionTimeout="3000" maxRequestLength="29296" />
+    <customErrors mode="Off"/>
+  </system.web>
+  <applicationSettings>
+    <LaHerradura.Properties.Settings>
+      <setting name="LaHerradura_wsaa_LoginCMSService" serializeAs="String">
+        <value>https://wsaa.afip.gov.ar/ws/services/LoginCms</value>
+      </setting>
+      <setting name="LaHerradura_FEProd_Service" serializeAs="String">
+        <value>https://servicios1.afip.gov.ar/wsfev1/service.asmx</value>
+      </setting>
+    </LaHerradura.Properties.Settings>
+  </applicationSettings>
+  <runtime>
+    <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+      <dependentAssembly>
+        <assemblyIdentity name="Newtonsoft.Json" publicKeyToken="30ad4fe6b2a6aeed" culture="neutral" />
+        <bindingRedirect oldVersion="0.0.0.0-12.0.0.0" newVersion="12.0.0.0" />
+      </dependentAssembly>
+    </assemblyBinding>
+  </runtime>
+  <system.webServer>
+    <defaultDocument>
+      <files>
+        <add value="index.aspx" />
+      </files>
+    </defaultDocument>
+    <validation validateIntegratedModeConfiguration="false" />
+  </system.webServer>
+  <system.serviceModel>
+    <bindings />
+    <client />
+  </system.serviceModel>
+
+</configuration>
+<!--ProjectGuid: 0ADE4219-04E9-4F58-A0CF-51245EB14427-->

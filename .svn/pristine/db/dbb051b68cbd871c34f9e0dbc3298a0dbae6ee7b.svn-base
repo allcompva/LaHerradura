@@ -1,0 +1,367 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class CONCEPTOS_X_INMUEBLE : DALBase
+    {
+        public int ID { get; set; }
+        public int NRO_CTA { get; set; }
+        public int ID_CONCEPTO { get; set; }
+        public int PERIODO { get; set; }
+        public DateTime FECHA { get; set; }
+        public string OBS { get; set; }
+        public decimal CANT { get; set; }
+        public decimal COSTO { get; set; }
+        public decimal SUBTOTAL { get; set; }
+        public bool MASIVO { get; set; }
+        public DateTime FECHA_CARGA { get; set; }
+        public int USUARIO_CARGA { get; set; }
+        public string DESC_CONCEPTO { get; set; }
+        public int NRO_ORDEN { get; set; }
+
+        public CONCEPTOS_X_INMUEBLE()
+        {
+            ID = 0;
+            NRO_CTA = 0;
+            ID_CONCEPTO = 0;
+            PERIODO = 0;
+            FECHA = DateTime.Now;
+            OBS = string.Empty;
+            CANT = 0;
+            COSTO = 0;
+            SUBTOTAL = 0;
+            MASIVO = false;
+            FECHA_CARGA = DateTime.Now;
+            USUARIO_CARGA = 0;
+            DESC_CONCEPTO = string.Empty;
+            NRO_ORDEN = 0;
+        }
+
+        private static List<CONCEPTOS_X_INMUEBLE> mapeo(SqlDataReader dr)
+        {
+            List<CONCEPTOS_X_INMUEBLE> lst = new List<CONCEPTOS_X_INMUEBLE>();
+            CONCEPTOS_X_INMUEBLE obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new CONCEPTOS_X_INMUEBLE();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.NRO_CTA = dr.GetInt32(1); }
+                    if (!dr.IsDBNull(2)) { obj.ID_CONCEPTO = dr.GetInt32(2); }
+                    if (!dr.IsDBNull(3)) { obj.PERIODO = dr.GetInt32(3); }
+                    if (!dr.IsDBNull(4)) { obj.FECHA = dr.GetDateTime(4); }
+                    if (!dr.IsDBNull(5)) { obj.OBS = dr.GetString(5); }
+                    if (!dr.IsDBNull(6)) { obj.CANT = dr.GetDecimal (6); }
+                    if (!dr.IsDBNull(7)) { obj.COSTO = dr.GetDecimal(7); }
+                    if (!dr.IsDBNull(8)) { obj.SUBTOTAL = dr.GetDecimal(8); }
+                    if (!dr.IsDBNull(9)) { obj.MASIVO = dr.GetBoolean(9); }
+                    if (!dr.IsDBNull(10)) { obj.FECHA_CARGA = dr.GetDateTime(10); }
+                    if (!dr.IsDBNull(11)) { obj.USUARIO_CARGA = dr.GetInt32(11); }
+                    if (!dr.IsDBNull(12)) { obj.NRO_ORDEN = dr.GetInt32(12); }
+                    if (!dr.IsDBNull(13)) { obj.DESC_CONCEPTO = dr.GetString(13); }
+
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<CONCEPTOS_X_INMUEBLE> read(int periodo)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT A.*, B.DESCRIPCION FROM CONCEPTOS_X_INMUEBLE A");
+                sql.AppendLine("INNER JOIN CONCEPTOS_EXPENSA B ON A.ID_CONCEPTO = B.ID");
+                sql.AppendLine("WHERE PERIODO=@PERIODO");
+                List<CONCEPTOS_X_INMUEBLE> lst = new List<CONCEPTOS_X_INMUEBLE>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@PERIODO", periodo);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static List<CONCEPTOS_X_INMUEBLE> readSinImputar(int nroCta)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT A.*, B.DESCRIPCION FROM CONCEPTOS_X_INMUEBLE A");
+                sql.AppendLine("INNER JOIN CONCEPTOS_EXPENSA B ON A.ID_CONCEPTO = B.ID");
+                sql.AppendLine("WHERE NRO_CTA=@NRO_CTA AND PERIODO=0 AND TIPO = 0");
+
+                List<CONCEPTOS_X_INMUEBLE> lst = new List<CONCEPTOS_X_INMUEBLE>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", nroCta);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static CONCEPTOS_X_INMUEBLE getByPk(int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *, '' FROM CONCEPTOS_X_INMUEBLE WHERE");
+                sql.AppendLine("ID = @ID");
+                CONCEPTOS_X_INMUEBLE obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<CONCEPTOS_X_INMUEBLE> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int insert(CONCEPTOS_X_INMUEBLE obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO CONCEPTOS_X_INMUEBLE(");
+                sql.AppendLine("NRO_CTA");
+                sql.AppendLine(", ID_CONCEPTO");
+                sql.AppendLine(", PERIODO");
+                sql.AppendLine(", FECHA");
+                sql.AppendLine(", OBS");
+                sql.AppendLine(", CANT");
+                sql.AppendLine(", COSTO");
+                sql.AppendLine(", SUBTOTAL");
+                sql.AppendLine(", MASIVO");
+                sql.AppendLine(", FECHA_CARGA");
+                sql.AppendLine(", USUARIO_CARGA");
+                sql.AppendLine(", NRO_ORDEN");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@NRO_CTA");
+                sql.AppendLine(", @ID_CONCEPTO");
+                sql.AppendLine(", @PERIODO");
+                sql.AppendLine(", @FECHA");
+                sql.AppendLine(", @OBS");
+                sql.AppendLine(", @CANT");
+                sql.AppendLine(", @COSTO");
+                sql.AppendLine(", @SUBTOTAL");
+                sql.AppendLine(", @MASIVO");
+                sql.AppendLine(", @FECHA_CARGA");
+                sql.AppendLine(", @USUARIO_CARGA");
+                sql.AppendLine(", @NRO_ORDEN");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", obj.NRO_CTA);
+                    cmd.Parameters.AddWithValue("@ID_CONCEPTO", obj.ID_CONCEPTO);
+                    cmd.Parameters.AddWithValue("@PERIODO", obj.PERIODO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@OBS", obj.OBS);
+                    cmd.Parameters.AddWithValue("@CANT", obj.CANT);
+                    cmd.Parameters.AddWithValue("@COSTO", obj.COSTO);
+                    cmd.Parameters.AddWithValue("@SUBTOTAL", obj.SUBTOTAL);
+                    cmd.Parameters.AddWithValue("@MASIVO", obj.MASIVO);
+                    cmd.Parameters.AddWithValue("@FECHA_CARGA", obj.FECHA_CARGA);
+                    cmd.Parameters.AddWithValue("@USUARIO_CARGA", obj.USUARIO_CARGA);
+                    cmd.Parameters.AddWithValue("@NRO_ORDEN", obj.NRO_ORDEN);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(CONCEPTOS_X_INMUEBLE obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  CONCEPTOS_X_INMUEBLE SET");
+                sql.AppendLine("NRO_CTA=@NRO_CTA");
+                sql.AppendLine(", ID_CONCEPTO=@ID_CONCEPTO");
+                sql.AppendLine(", PERIODO=@PERIODO");
+                sql.AppendLine(", FECHA=@FECHA");
+                sql.AppendLine(", OBS=@OBS");
+                sql.AppendLine(", CANT=@CANT");
+                sql.AppendLine(", COSTO=@COSTO");
+                sql.AppendLine(", SUBTOTAL=@SUBTOTAL");
+                sql.AppendLine(", MASIVO=@MASIVO");
+                sql.AppendLine(", FECHA_CARGA=@FECHA_CARGA");
+                sql.AppendLine(", USUARIO_CARGA=@USUARIO_CARGA");
+                sql.AppendLine(", NRO_ORDEN=@NRO_ORDEN");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", obj.NRO_CTA);
+                    cmd.Parameters.AddWithValue("@ID_CONCEPTO", obj.ID_CONCEPTO);
+                    cmd.Parameters.AddWithValue("@PERIODO", obj.PERIODO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@OBS", obj.OBS);
+                    cmd.Parameters.AddWithValue("@CANT", obj.CANT);
+                    cmd.Parameters.AddWithValue("@COSTO", obj.COSTO);
+                    cmd.Parameters.AddWithValue("@SUBTOTAL", obj.SUBTOTAL);
+                    cmd.Parameters.AddWithValue("@MASIVO", obj.MASIVO);
+                    cmd.Parameters.AddWithValue("@FECHA_CARGA", obj.FECHA_CARGA);
+                    cmd.Parameters.AddWithValue("@USUARIO_CARGA", obj.USUARIO_CARGA);
+                    cmd.Parameters.AddWithValue("@NRO_ORDEN", obj.USUARIO_CARGA);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void imputar(int periodo)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE CONCEPTOS_X_INMUEBLE SET");
+                sql.AppendLine("PERIODO=@PERIODO");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("PERIODO=0");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@PERIODO", periodo);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void desimputar(int periodo)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE CONCEPTOS_X_INMUEBLE SET");
+                sql.AppendLine("PERIODO=0");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("PERIODO=@PERIODO");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@PERIODO", periodo);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void delete(int id)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  CONCEPTOS_X_INMUEBLE ");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int getMaxOrden(int nroCta, int periodo)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT ISNULL(MAX(NRO_ORDEN), 0) ");
+                sql.AppendLine("FROM CONCEPTOS_X_INMUEBLE");
+                sql.AppendLine("WHERE PERIODO = @PERIODO AND NRO_CTA = @NRO_CTA");
+                CONCEPTOS_X_INMUEBLE obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@PERIODO", periodo);
+                    cmd.Parameters.AddWithValue("@NRO_CTA", nroCta);
+                    cmd.Connection.Open();
+
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}
+

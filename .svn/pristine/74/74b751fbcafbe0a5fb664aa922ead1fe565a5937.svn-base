@@ -1,0 +1,375 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class USUARIOS : DALBase
+    {
+        public int ID { get; set; }
+        public string USUARIO { get; set; }
+        public string PASS { get; set; }
+        public int ROL { get; set; }
+        public int ID_PERSONA { get; set; }
+        public string APELLIDO { get; set; }
+        public string NOMBRE { get; set; }
+        public DateTime FEC_NAC { get; set; }
+        public string SEXO { get; set; }
+        public string DNI { get; set; }
+        public string CUIT { get; set; }
+        public string MAIL { get; set; }
+        public string CEL { get; set; }
+        public bool ACTIVO { get; set; }
+
+        public USUARIOS()
+        {
+            ID = 0;
+            USUARIO = string.Empty;
+            PASS = string.Empty;
+            ROL = 0;
+            ID_PERSONA = 0;
+            APELLIDO = string.Empty;
+            NOMBRE = string.Empty;
+            FEC_NAC = DateTime.Now;
+            SEXO = string.Empty;
+            DNI = string.Empty;
+            CUIT = string.Empty;
+            MAIL = string.Empty;
+            CEL = string.Empty;
+            ACTIVO = true;
+        }
+
+        private static List<USUARIOS> mapeo(SqlDataReader dr)
+        {
+            List<USUARIOS> lst = new List<USUARIOS>();
+            USUARIOS obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new USUARIOS();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.USUARIO = dr.GetString(1); }
+                    if (!dr.IsDBNull(2)) { obj.PASS = dr.GetString(2); }
+                    if (!dr.IsDBNull(3)) { obj.ROL = dr.GetInt32(3); }
+                    if (!dr.IsDBNull(4)) { obj.ID_PERSONA = dr.GetInt32(4); }
+                    if (!dr.IsDBNull(5)) { obj.APELLIDO = dr.GetString(5); }
+                    if (!dr.IsDBNull(6)) { obj.NOMBRE = dr.GetString(6); }
+                    if (!dr.IsDBNull(7)) { obj.FEC_NAC = dr.GetDateTime(7); }
+                    if (!dr.IsDBNull(8)) { obj.SEXO = dr.GetString(8); }
+                    if (!dr.IsDBNull(9)) { obj.DNI = dr.GetString(9); }
+                    if (!dr.IsDBNull(10)) { obj.CUIT = dr.GetString(10); }
+                    if (!dr.IsDBNull(11)) { obj.MAIL = dr.GetString(11); }
+                    if (!dr.IsDBNull(12)) { obj.CEL = dr.GetString(12); }
+                    if (!dr.IsDBNull(13)) { obj.ACTIVO = dr.GetBoolean(13); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<USUARIOS> read()
+        {
+            try
+            {
+                List<USUARIOS> lst = new List<USUARIOS>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM USUARIOS";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static USUARIOS getByPk(
+        int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM USUARIOS WHERE");
+                sql.AppendLine("ID = @ID");
+                USUARIOS obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<USUARIOS> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static USUARIOS validUser(string usu, string pass)
+        {
+            try
+            {
+                string _pass = MD5Encryption.EncryptMD5(pass);
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM USUARIOS WHERE");
+                sql.AppendLine("USUARIO=@USUARIO AND PASS=@PASS");
+                USUARIOS obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@USUARIO", usu);
+                    cmd.Parameters.AddWithValue("@PASS", _pass);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<USUARIOS> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static USUARIOS getByUser(string usu)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM USUARIOS WHERE");
+                sql.AppendLine("USUARIO=@USUARIO");
+                USUARIOS obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@USUARIO", usu);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<USUARIOS> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int insert(USUARIOS obj)
+        {
+            try
+            {
+                string _pass = MD5Encryption.EncryptMD5(obj.PASS);
+
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO USUARIOS(");
+                sql.AppendLine("USUARIO");
+                sql.AppendLine(", PASS");
+                sql.AppendLine(", ROL");
+                sql.AppendLine(", APELLIDO");
+                sql.AppendLine(", NOMBRE");
+                sql.AppendLine(", MAIL");
+                sql.AppendLine(", CEL");
+                sql.AppendLine(", ACTIVO");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@USUARIO");
+                sql.AppendLine(", @PASS");
+                sql.AppendLine(", @ROL");
+                sql.AppendLine(", @APELLIDO");
+                sql.AppendLine(", @NOMBRE");
+                sql.AppendLine(", @MAIL");
+                sql.AppendLine(", @CEL");
+                sql.AppendLine(", @ACTIVO");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@USUARIO", obj.USUARIO);
+                    cmd.Parameters.AddWithValue("@PASS", _pass);
+                    cmd.Parameters.AddWithValue("@ROL", obj.ROL);
+                    cmd.Parameters.AddWithValue("@APELLIDO", obj.APELLIDO);
+                    cmd.Parameters.AddWithValue("@NOMBRE", obj.NOMBRE);
+                    cmd.Parameters.AddWithValue("@MAIL", obj.MAIL);
+                    cmd.Parameters.AddWithValue("@CEL", obj.CEL);
+                    cmd.Parameters.AddWithValue("@ACTIVO", obj.ACTIVO);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(USUARIOS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  USUARIOS SET");
+                sql.AppendLine("USUARIO=@USUARIO");
+                sql.AppendLine(", ROL=@ROL");
+                sql.AppendLine(", APELLIDO=@APELLIDO");
+                sql.AppendLine(", NOMBRE=@NOMBRE");
+                sql.AppendLine(", MAIL=@MAIL");
+                sql.AppendLine(", CEL=@CEL");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@USUARIO", obj.USUARIO);
+                    cmd.Parameters.AddWithValue("@ROL", obj.ROL);
+                    cmd.Parameters.AddWithValue("@APELLIDO", obj.APELLIDO);
+                    cmd.Parameters.AddWithValue("@NOMBRE", obj.NOMBRE);
+                    cmd.Parameters.AddWithValue("@MAIL", obj.MAIL);
+                    cmd.Parameters.AddWithValue("@CEL", obj.CEL);
+                    cmd.Parameters.AddWithValue("@ID", obj.ID);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int ClearPass(int id, string newPass)
+        {
+            try
+            {
+                string _pass = MD5Encryption.EncryptMD5(newPass);
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  USUARIOS SET");
+                sql.AppendLine("PASS=@NEWPASS");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Parameters.AddWithValue("@NEWPASS", _pass);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteNonQuery());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int changePass(int id, string newPass, string oldPass)
+        {
+            try
+            {
+                string _Newpass = MD5Encryption.EncryptMD5(newPass);
+                string _Oldpass = MD5Encryption.EncryptMD5(oldPass);
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  USUARIOS SET");
+                sql.AppendLine("PASS=@NEWPASS");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID AND PASS=@OLDPASS");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Parameters.AddWithValue("@NEWPASS", _Newpass);
+                    cmd.Parameters.AddWithValue("@OLDPASS", _Oldpass);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteNonQuery());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int activaDesactiva(int id, bool activa)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  USUARIOS SET");
+                sql.AppendLine("ACTIVO=@ACTIVO");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Parameters.AddWithValue("@ACTIVO", activa);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteNonQuery());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void delete(int id)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  USUARIOS ");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }               
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+

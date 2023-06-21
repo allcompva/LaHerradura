@@ -1,0 +1,94 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+namespace LaHerradura.MP
+{
+    public partial class MPBack : System.Web.UI.MasterPage
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                divError.Visible = false;
+                divOk.Visible = false;
+                msgError.InnerHtml = string.Empty;
+                if (Request.Cookies["UserLh"] == null)
+                    Response.Redirect("../index.aspx");
+
+                DAL.USUARIOS obj =
+                    DAL.USUARIOS.getByPk(Convert.ToInt32(Request.Cookies["UserLh"]["Id"]));
+                lblUsuario.InnerHtml = obj.USUARIO;
+                lblUsuario2.InnerHtml = string.Format("{0}, {1}",
+                    obj.APELLIDO, obj.NOMBRE);
+            }
+            catch (Exception ex)
+            {
+                divError.Visible = true;
+                msgError.InnerHtml = ex.Message;
+            }
+        }
+
+
+        protected void btnCambioPass_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                int id = Convert.ToInt32(Request.Cookies["UserLh"]["Id"]);
+                DAL.USUARIOS obj = DAL.USUARIOS.getByPk(id);
+                string _pass = DAL.MD5Encryption.EncryptMD5(txtOldPass.Text);
+                if (obj.PASS == _pass)
+                {
+                    DAL.USUARIOS.changePass(id, txtNewPass.Text, txtOldPass.Text);
+                    divOk.Visible = true;
+                    msgOk.InnerHtml = "Su clave fue actualizada correctamente";
+                }
+                else
+                {
+                    divError.Visible = true;
+                    msgError.InnerHtml = "Alguno de los datos ingresados no es correcto";
+                }
+            }
+            catch (Exception ex)
+            {
+                divError.Visible = true;
+                msgError.InnerHtml = ex.Message;
+            }
+        }
+
+        protected void btnSalr_ServerClick(object sender, EventArgs e)
+        {
+            try
+            {
+                Response.Cookies["UserLh"].Expires = Utils.Utils.getFechaActual().AddDays(-1d);
+                Response.Redirect("../index.aspx");
+            }
+            catch (Exception ex)
+            {
+                divError.Visible = true;
+                msgError.InnerHtml = ex.Message;
+            }
+        }
+
+        protected void btnCaja_ServerClick(object sender, EventArgs e)
+        {
+            //try
+            //{
+            //    int id_empresa = 1;
+            //    DAL.PLANILLA_CAJA_GRAL obj = DAL.PLANILLA_CAJA_GRAL.getByEstado(0, id_empresa);
+            //    if (obj != null)
+            //        Response.Redirect(string.Format("Caja.aspx?id={0}",
+            //            obj.ID));
+            //    else
+            //        Response.Redirect("apertura_caja.aspx");
+            //}
+            //catch (Exception ex)
+            //{
+            //    throw ex;
+            //}
+        }
+    }
+}

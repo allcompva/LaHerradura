@@ -1,0 +1,265 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class LIBRO_MAYOR : DALBase
+    {
+        public int NRO_ASIENTO { get; set; }
+        public DateTime FECHA { get; set; }
+        public string CUENTA { get; set; }
+        public string DESCRIPCION { get; set; }
+        public decimal DEBE { get; set; }
+        public decimal HABER { get; set; }
+        public decimal SALDO { get; set; }
+
+        public LIBRO_MAYOR()
+        {
+            NRO_ASIENTO = 0;
+            FECHA = DateTime.Now;
+            CUENTA = string.Empty;
+            DESCRIPCION = string.Empty;
+            DEBE = 0;
+            HABER = 0;
+            SALDO = 0;
+        }
+
+        private static List<LIBRO_MAYOR> mapeo(SqlDataReader dr)
+        {
+            List<LIBRO_MAYOR> lst = new List<LIBRO_MAYOR>();
+            LIBRO_MAYOR obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new LIBRO_MAYOR();
+                    if (!dr.IsDBNull(0)) { obj.NRO_ASIENTO = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(2)) { obj.FECHA = dr.GetDateTime(2); }
+                    if (obj.NRO_ASIENTO == 0)
+                    {
+                        if (!dr.IsDBNull(3)) { obj.CUENTA = dr.GetString(3); }
+                    }
+                    else
+                    {
+                        if (!dr.IsDBNull(4)) { obj.CUENTA =
+                                string.Format("Ref.: {0} - {1}",
+                                obj.NRO_ASIENTO, dr.GetString(4)); }
+                    }
+                    if (!dr.IsDBNull(5)) { obj.DEBE = dr.GetDecimal(5); }
+                    if (!dr.IsDBNull(6)) { obj.HABER = dr.GetDecimal(6); }
+                    if (!dr.IsDBNull(7)) { obj.SALDO = dr.GetDecimal(7); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<LIBRO_MAYOR> read(DateTime desde, DateTime hasta)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT 0 AS NRO_ASIENTO, 0 AS ID_REFERENCIA, '' AS FECHA, N5 + ' - ' + DESC_SUBCUENTA");
+                sql.AppendLine("AS CUENTA, '' AS DESCRIPCION,");
+                sql.AppendLine("(SELECT ISNULL(SUM(DEBE),0) FROM ASIENTOS_DETALLE B");
+                sql.AppendLine("INNER JOIN ASIENTOS B1 ON B.ID_ASIENTO=B1.ID");
+                sql.AppendLine("WHERE A.ID=B.ID_CUENTA AND B1.FECHA BETWEEN ");
+                sql.AppendLine("@FECHA_DESDE AND @FECHA_HASTA)");
+                sql.AppendLine("AS DEBE,");
+                sql.AppendLine("(SELECT ISNULL(SUM(HABER),0) FROM ASIENTOS_DETALLE B");
+                sql.AppendLine("INNER JOIN ASIENTOS B1 ON B.ID_ASIENTO=B1.ID");
+                sql.AppendLine("WHERE A.ID=B.ID_CUENTA AND B1.FECHA BETWEEN");
+                sql.AppendLine("@FECHA_DESDE AND @FECHA_HASTA)");
+                sql.AppendLine("AS HABER,");
+                sql.AppendLine("(SELECT ISNULL(SUM(DEBE),0) FROM ASIENTOS_DETALLE B");
+                sql.AppendLine("INNER JOIN ASIENTOS B1 ON B.ID_ASIENTO=B1.ID");
+                sql.AppendLine("WHERE A.ID=B.ID_CUENTA AND B1.FECHA BETWEEN ");
+                sql.AppendLine("@FECHA_DESDE AND @FECHA_HASTA)");
+                sql.AppendLine("-");
+                sql.AppendLine("(SELECT ISNULL(SUM(HABER),0) FROM ASIENTOS_DETALLE B");
+                sql.AppendLine("INNER JOIN ASIENTOS B1 ON B.ID_ASIENTO=B1.ID");
+                sql.AppendLine("WHERE A.ID=B.ID_CUENTA AND B1.FECHA BETWEEN ");
+                sql.AppendLine("@FECHA_DESDE AND @FECHA_HASTA)");
+                sql.AppendLine("AS SALDO");
+                sql.AppendLine("FROM PLAN_CUENTA A WHERE N5 + ' - ' + DESC_SUBCUENTA IS NOT NULL");
+                sql.AppendLine("AND ((SELECT ISNULL(SUM(DEBE),0) FROM ASIENTOS_DETALLE B");
+                sql.AppendLine("INNER JOIN ASIENTOS B1 ON B.ID_ASIENTO=B1.ID");
+                sql.AppendLine("WHERE A.ID=B.ID_CUENTA AND B1.FECHA BETWEEN ");
+                sql.AppendLine("@FECHA_DESDE AND @FECHA_HASTA)");
+                sql.AppendLine("-");
+                sql.AppendLine("(SELECT ISNULL(SUM(HABER),0) FROM ASIENTOS_DETALLE B");
+                sql.AppendLine("INNER JOIN ASIENTOS B1 ON B.ID_ASIENTO=B1.ID");
+                sql.AppendLine("WHERE A.ID=B.ID_CUENTA AND B1.FECHA BETWEEN ");
+                sql.AppendLine("@FECHA_DESDE AND @FECHA_HASTA)) <> 0");
+                sql.AppendLine("UNION");
+                sql.AppendLine("SELECT A.NRO, B.ID_REFERENCIA, A.FECHA,");
+                sql.AppendLine("C.N5 + ' - ' + C.DESC_SUBCUENTA AS CUENTA,");
+                sql.AppendLine("A.DESCRIPCION,");
+                sql.AppendLine("B.DEBE, B.HABER, ");
+                sql.AppendLine("B.DEBE-B.HABER");
+                sql.AppendLine("FROM ASIENTOS A");
+                sql.AppendLine("INNER JOIN ASIENTOS_DETALLE B ON A.ID=B.ID_ASIENTO");
+                sql.AppendLine("INNER JOIN PLAN_CUENTA C ON B.ID_CUENTA=C.ID");
+                sql.AppendLine("WHERE A.FECHA BETWEEN ");
+                sql.AppendLine("@FECHA_DESDE AND @FECHA_HASTA");
+                sql.AppendLine("ORDER BY N5 + ' - ' + DESC_SUBCUENTA ");
+
+                List<LIBRO_MAYOR> lst = new List<LIBRO_MAYOR>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@FECHA_DESDE", desde);
+                    cmd.Parameters.AddWithValue("@FECHA_HASTA", hasta);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static LIBRO_MAYOR getByPk(
+        )
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM LIBRO_MAYOR WHERE");
+                LIBRO_MAYOR obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<LIBRO_MAYOR> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int insert(LIBRO_MAYOR obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO LIBRO_MAYOR(");
+                sql.AppendLine("NRO_ASIENTO");
+                sql.AppendLine(", FECHA");
+                sql.AppendLine(", CUENTA");
+                sql.AppendLine(", DESCRIPCION");
+                sql.AppendLine(", DEBE");
+                sql.AppendLine(", HABER");
+                sql.AppendLine(", SALDO");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@NRO_ASIENTO");
+                sql.AppendLine(", @FECHA");
+                sql.AppendLine(", @CUENTA");
+                sql.AppendLine(", @DESCRIPCION");
+                sql.AppendLine(", @DEBE");
+                sql.AppendLine(", @HABER");
+                sql.AppendLine(", @SALDO");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_ASIENTO", obj.NRO_ASIENTO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@CUENTA", obj.CUENTA);
+                    cmd.Parameters.AddWithValue("@DESCRIPCION", obj.DESCRIPCION);
+                    cmd.Parameters.AddWithValue("@DEBE", obj.DEBE);
+                    cmd.Parameters.AddWithValue("@HABER", obj.HABER);
+                    cmd.Parameters.AddWithValue("@SALDO", obj.SALDO);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(LIBRO_MAYOR obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  LIBRO_MAYOR SET");
+                sql.AppendLine("NRO_ASIENTO=@NRO_ASIENTO");
+                sql.AppendLine(", FECHA=@FECHA");
+                sql.AppendLine(", CUENTA=@CUENTA");
+                sql.AppendLine(", DESCRIPCION=@DESCRIPCION");
+                sql.AppendLine(", DEBE=@DEBE");
+                sql.AppendLine(", HABER=@HABER");
+                sql.AppendLine(", SALDO=@SALDO");
+                sql.AppendLine("WHERE");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_ASIENTO", obj.NRO_ASIENTO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@CUENTA", obj.CUENTA);
+                    cmd.Parameters.AddWithValue("@DESCRIPCION", obj.DESCRIPCION);
+                    cmd.Parameters.AddWithValue("@DEBE", obj.DEBE);
+                    cmd.Parameters.AddWithValue("@HABER", obj.HABER);
+                    cmd.Parameters.AddWithValue("@SALDO", obj.SALDO);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(LIBRO_MAYOR obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  LIBRO_MAYOR ");
+                sql.AppendLine("WHERE");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+

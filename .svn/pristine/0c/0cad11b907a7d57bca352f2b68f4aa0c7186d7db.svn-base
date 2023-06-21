@@ -1,0 +1,459 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class ORDENES_PAGO : DALBase
+    {
+        public int ID { get; set; }
+        public int PTO_VTA { get; set; }
+        public int NRO { get; set; }
+        public int ID_PROV { get; set; }
+        public DateTime FECHA { get; set; }
+        public int ID_USUARIO_CARGA { get; set; }
+        public DateTime FECHA_AUTORIZA { get; set; }
+        public int USUARIO_AUTORIZA { get; set; }
+        public int ESTADO { get; set; }
+        public DateTime FECHA_CARGA { get; set; }
+        public decimal DEBE { get; set; }
+        public decimal HABER { get; set; }
+        public decimal SALDO { get; set; }
+        public int EJERCICIO { get; set; }
+        public DateTime FECHA_ANULA { get; set; }
+        public int USUARIO_ANULA { get; set; }
+        public string _ESTADO { get; set; }
+
+        public ORDENES_PAGO()
+        {
+            ID = 0;
+            PTO_VTA = 0;
+            NRO = 0;
+            ID_PROV = 0;
+            FECHA = DateTime.Now;
+            ID_USUARIO_CARGA = 0;
+            FECHA_AUTORIZA = DateTime.Now;
+            USUARIO_AUTORIZA = 0;
+            ESTADO = 0;
+            FECHA_CARGA = DateTime.Now;
+            DEBE = 0;
+            HABER = 0;
+            SALDO = 0;
+            _ESTADO = string.Empty;
+        }
+
+        private static List<ORDENES_PAGO> mapeo(SqlDataReader dr)
+        {
+            List<ORDENES_PAGO> lst = new List<ORDENES_PAGO>();
+            ORDENES_PAGO obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new ORDENES_PAGO();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.PTO_VTA = dr.GetInt32(1); }
+                    if (!dr.IsDBNull(2)) { obj.NRO = dr.GetInt32(2); }
+                    if (!dr.IsDBNull(3)) { obj.ID_PROV = dr.GetInt32(3); }
+                    if (!dr.IsDBNull(4)) { obj.FECHA = dr.GetDateTime(4); }
+                    if (!dr.IsDBNull(5)) { obj.ID_USUARIO_CARGA = dr.GetInt32(5); }
+                    if (!dr.IsDBNull(6)) { obj.FECHA_AUTORIZA = dr.GetDateTime(6); }
+                    if (!dr.IsDBNull(7)) { obj.USUARIO_AUTORIZA = dr.GetInt32(7); }
+                    if (!dr.IsDBNull(8)) { obj.ESTADO = dr.GetInt32(8); }
+                    if (!dr.IsDBNull(9)) { obj.FECHA_CARGA = dr.GetDateTime(9); }
+                    if (!dr.IsDBNull(10)) { obj.DEBE = dr.GetDecimal(10); }
+                    if (!dr.IsDBNull(11)) { obj.HABER = dr.GetDecimal(11); }
+                    if (!dr.IsDBNull(12)) { obj.SALDO = dr.GetDecimal(12); }
+                    if (!dr.IsDBNull(13)) { obj.EJERCICIO = dr.GetInt32(13); }
+                    if (!dr.IsDBNull(14)) { obj.FECHA_ANULA = dr.GetDateTime(14); }
+                    if (!dr.IsDBNull(15)) { obj.USUARIO_ANULA = dr.GetInt32(15); }
+                    switch (obj.ESTADO)
+                    {
+                        case 0:
+                            obj._ESTADO = "PARA AUTORIZAR";
+                            break;
+                        case 1:
+                            obj._ESTADO = "AUTORIZADA";
+                            break;
+                        case 2:
+                            obj._ESTADO = "PAGADA";
+                            break;
+                        case 3:
+                            obj._ESTADO = "CON PAGO A CUENTA";
+                            break;
+                        case 4:
+                            obj._ESTADO = "ANULADA";
+                            break;
+                        default:
+                            break;
+                    }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<ORDENES_PAGO> read()
+        {
+            try
+            {
+                List<ORDENES_PAGO> lst = new List<ORDENES_PAGO>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM ORDENES_PAGO";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<ORDENES_PAGO> readParaAprobar()
+        {
+            try
+            {
+                List<ORDENES_PAGO> lst = new List<ORDENES_PAGO>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM ORDENES_PAGO WHERE ESTADO = 0";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<ORDENES_PAGO> getByEstado(int estado)
+        {
+            try
+            {
+                List<ORDENES_PAGO> lst = new List<ORDENES_PAGO>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText =
+                        "SELECT *FROM ORDENES_PAGO WHERE ESTADO = @ESTADO";
+                    cmd.Parameters.AddWithValue("@ESTADO", estado);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<ORDENES_PAGO> getAPagar(int idProv)
+        {
+            try
+            {
+                List<ORDENES_PAGO> lst = new List<ORDENES_PAGO>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText =
+                        "SELECT *FROM ORDENES_PAGO WHERE ESTADO IN (1,3) AND ID_PROV=@ID_PROV";
+                    cmd.Parameters.AddWithValue("@ID_PROV", idProv);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static ORDENES_PAGO getByPk(int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM ORDENES_PAGO WHERE");
+                sql.AppendLine("ID = @ID");
+                ORDENES_PAGO obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<ORDENES_PAGO> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int getNroOrdenByMes(int mes, int anio)
+        {
+            try
+            {
+                int nroOrden = 0;
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT ISNULL(MAX(NRO), 0) FROM ORDENES_PAGO");
+                sql.AppendLine("WHERE MONTH(FECHA) = @MES AND YEAR(FECHA) = @ANIO");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@MES", mes);
+                    cmd.Parameters.AddWithValue("@ANIO", anio);
+                    cmd.Connection.Open();
+                    nroOrden = Convert.ToInt32(cmd.ExecuteScalar());
+                }
+                return nroOrden;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int insert(ORDENES_PAGO obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO ORDENES_PAGO(");
+                sql.AppendLine("PTO_VTA");
+                sql.AppendLine(", ID_PROV");
+                sql.AppendLine(", NRO");
+                sql.AppendLine(", FECHA");
+                sql.AppendLine(", ID_USUARIO_CARGA");
+                sql.AppendLine(", ESTADO");
+                sql.AppendLine(", FECHA_CARGA");
+                sql.AppendLine(", DEBE");
+                sql.AppendLine(", HABER");
+                sql.AppendLine(", SALDO");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(1");
+                sql.AppendLine(", @ID_PROV");
+                sql.AppendLine(", @NRO");
+                sql.AppendLine(", @FECHA");
+                sql.AppendLine(", @ID_USUARIO_CARGA");
+                sql.AppendLine(", 0");
+                sql.AppendLine(", @FECHA_CARGA");
+                sql.AppendLine(", @DEBE");
+                sql.AppendLine(", 0");
+                sql.AppendLine(", @SALDO");
+                sql.AppendLine(");");
+                sql.AppendLine("SELECT SCOPE_IDENTITY();");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID_PROV", obj.ID_PROV);
+                    cmd.Parameters.AddWithValue("@NRO", obj.NRO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@ID_USUARIO_CARGA", obj.ID_USUARIO_CARGA);
+                    cmd.Parameters.AddWithValue("@ESTADO", obj.ESTADO);
+                    cmd.Parameters.AddWithValue("@FECHA_CARGA", obj.FECHA_CARGA);
+                    cmd.Parameters.AddWithValue("@DEBE", obj.DEBE);
+                    cmd.Parameters.AddWithValue("@SALDO", obj.SALDO);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(ORDENES_PAGO obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  ORDENES_PAGO SET");
+                sql.AppendLine(", FECHA_AUTORIZA=@FECHA_AUTORIZA");
+                sql.AppendLine(", USUARIO_AUTORIZA=@USUARIO_AUTORIZA");
+                sql.AppendLine(", ESTADO=@ESTADO");
+                sql.AppendLine(", HABER=@HABER");
+                sql.AppendLine(", SALDO=@SALDO");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@FECHA_AUTORIZA", obj.FECHA_AUTORIZA);
+                    cmd.Parameters.AddWithValue("@USUARIO_AUTORIZA", obj.USUARIO_AUTORIZA);
+                    cmd.Parameters.AddWithValue("@ESTADO", obj.ESTADO);
+                    cmd.Parameters.AddWithValue("@HABER", obj.HABER);
+                    cmd.Parameters.AddWithValue("@SALDO", obj.SALDO);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(int id)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  ORDENES_PAGO ");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void autorizarOrden(ORDENES_PAGO obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  ORDENES_PAGO SET");
+                sql.AppendLine("FECHA_AUTORIZA=@FECHA_AUTORIZA");
+                sql.AppendLine(", USUARIO_AUTORIZA=@USUARIO_AUTORIZA");
+                sql.AppendLine(", ESTADO=1");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@FECHA_AUTORIZA", obj.FECHA_AUTORIZA);
+                    cmd.Parameters.AddWithValue("@USUARIO_AUTORIZA", obj.USUARIO_AUTORIZA);
+                    cmd.Parameters.AddWithValue("@ID", obj.ID);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void anulaOrden(ORDENES_PAGO obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  ORDENES_PAGO SET");
+                sql.AppendLine("FECHA_ANULA=@FECHA_ANULA");
+                sql.AppendLine(", USUARIO_ANULA=@USUARIO_ANULA");
+                sql.AppendLine(", ESTADO=4");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@FECHA_ANULA", obj.FECHA_ANULA);
+                    cmd.Parameters.AddWithValue("@USUARIO_ANULA", obj.USUARIO_ANULA);
+                    cmd.Parameters.AddWithValue("@ID", obj.ID);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void pagoOrden(int id, decimal haber)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  ORDENES_PAGO SET");
+                sql.AppendLine("ESTADO=2, HABER=HABER+@HABER, SALDO=0");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Parameters.AddWithValue("@HABER", haber);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void pagoCuentaOrden(int id, decimal haber, 
+            decimal saldo)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  ORDENES_PAGO SET");
+                sql.AppendLine("ESTADO=3, HABER=HABER+@HABER, SALDO=@SALDO");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Parameters.AddWithValue("@HABER", haber);
+                    cmd.Parameters.AddWithValue("@SALDO", saldo);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}
+

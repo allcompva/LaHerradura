@@ -1,0 +1,263 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Transactions;
+
+namespace BLL
+{
+    public class ANULA_RECIBO
+    {
+        public static int anulaPago(int nro_recibo, string obs, int idUsuario)
+        {
+            try
+            {
+                int ret = 0;
+                //using (TransactionScope scope = new TransactionScope())
+                //{
+                    //OBTENGO LAS CUENTAS QUE AFECTA EL RECIBO
+                    List<DAL.CTACTE_EXPENSAS> lst = DAL.CTACTE_EXPENSAS.getByRecibo2(nro_recibo);
+                    //ITERO LOS PERIODOS Y VERIFICO SI TIENE MAS DE UN MOVIMIENTO DE PAGO
+                    foreach (var item in lst)
+                    {
+                        int pagos = DAL.CTACTE_EXPENSAS.getPagos(item.PERIODO, item.NRO_CTA);
+                        //BUSCO EL MOVIMIENTO DE GENERACION DE DEUDA
+                        DAL.CTACTE_EXPENSAS objMov1 =
+                            DAL.CTACTE_EXPENSAS.read2(item.PERIODO, item.NRO_CTA).Find(
+                            c => c.TIPO_MOVIMIENTO == 1 || c.TIPO_MOVIMIENTO == 3 || c.TIPO_MOVIMIENTO == 21);
+                        //EN CASO QUE EL PERIODO TENGA UN SOLO MOVIMIENTO DE PAGO
+                        //SEA TOTAL O PARCIAL REALIZO OPERACIONES DE ANULAR PAGO COMPLETO
+                        if (pagos == 1)
+                        {
+                            DAL.ANULA_RECIBO.cancelaPagoCompletoMovTipo_1(objMov1);
+                            item.ID_USUARIO_ANULA = idUsuario;
+                            item.OBS = obs;
+                            DAL.ANULA_RECIBO.cancelaPagoCompletoMovTipo_2(item);
+                            DAL.ANULA_RECIBO.elimina(item);
+
+                            if (item.TIPO_MOVIMIENTO == 1)
+                                DAL.CTACTE_EXPENSAS.recalculo(DateTime.Now, objMov1.PERIODO, objMov1.NRO_CTA, objMov1.ID);
+                            //if (item.TIPO_MOVIMIENTO == 3)
+                            //    DAL.CTACTE_EXPENSAS.recalculoPlan(DateTime.Now, item.PERIODO, item.NRO_CTA, item.ID, item.NRO_PLAN_PAGO);
+                        }
+                        else
+                        {
+                            if (pagos > 1)
+                            {
+                                //EN CASO QUE EL PERIODO TENGA MAS DE UN MOVIMIENTO DE PAGO
+                                //VERIFICO QUE SE INTENTA ELIMINAR EL ULTIMO, DE NO SER ASI SE ANULA EL PROCESO
+                                List<DAL.CTACTE_EXPENSAS> lstPagos = DAL.CTACTE_EXPENSAS.readPagos(item.PERIODO,
+                                    item.NRO_CTA);
+                                if (lstPagos[lstPagos.Count - 1] != null)
+                                {
+                                    if (nro_recibo == lstPagos[lstPagos.Count - 1].NRO_RECIBO_PAGO)
+                                    {
+                                        lstPagos[lstPagos.Count - 1].ID_USUARIO_ANULA = idUsuario;
+                                        lstPagos[lstPagos.Count - 1].OBS = obs;
+                                        DAL.ANULA_RECIBO.cancelaPagoCompletoMovTipo_2(lstPagos[lstPagos.Count - 1]);
+
+                                        DAL.ANULA_RECIBO.cancelaPagoParcialMovTipo_1(
+                                            lstPagos[lstPagos.Count - 1], objMov1, lstPagos[lstPagos.Count - 2].FECHA);
+
+
+                                        DAL.ANULA_RECIBO.elimina(lstPagos[lstPagos.Count - 1]);
+
+                                        DAL.CTACTE_EXPENSAS.recalculo(DateTime.Now, objMov1.PERIODO, objMov1.NRO_CTA, objMov1.ID);
+                                    }
+                                    else
+                                    {
+                                        return lstPagos[lstPagos.Count - 1].NRO_RECIBO_PAGO;
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+
+                    //scope.Complete();
+                    return ret;
+                //}
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int anulaPagoGasto(int nro_recibo, string obs, int idUsuario)
+        {
+            try
+            {
+                int ret = 0;
+                using (TransactionScope scope = new TransactionScope())
+                {
+                    //OBTENGO LAS CUENTAS QUE AFECTA EL RECIBO
+                    List<DAL.CTACTE_GASTOS> lst =
+                        DAL.CTACTE_GASTOS.getByRecibo(nro_recibo);
+                    //ITERO LOS PERIODOS Y VERIFICO SI TIENE MAS DE UN MOVIMIENTO DE PAGO
+                    foreach (var item in lst)
+                    {
+                        DAL.MOV_BILLETERA_GASTOS objBilletera1Verifica =
+    DAL.MOV_BILLETERA_GASTOS.getByNroRecibo(nro_recibo);
+                        if (objBilletera1Verifica != null)
+                        {
+                            DAL.MOV_BILLETERA_GASTOS objBilletera2Verifica =
+    DAL.MOV_BILLETERA_GASTOS.getByNroProvFecha(item.ID_PROVEEDOR, objBilletera1Verifica.FECHA);
+                            if (objBilletera2Verifica != null)
+                            {
+                                return objBilletera2Verifica.NRO_RECIBO;
+                            }
+                        }
+                        List<DAL.PAGOS_X_FACTURA_GASTOS> lstP =
+    DAL.PAGOS_X_FACTURA_GASTOS.read(item.NRO_RECIBO_PAGO);
+                        foreach (var item2 in lstP)
+                        {
+                            if (item2.ID_PLAN_PAGO == 7)
+                            {
+                                int idProv = item.ID_PROVEEDOR;
+                                decimal monto = item2.MONTO;
+                                DAL.MOV_BILLETERA_GASTOS obj = 
+                                    DAL.MOV_BILLETERA_GASTOS.getByNroRecibo2(
+                                    Convert.ToInt32(item2.ID_FACTURA));
+                                DAL.MOV_BILLETERA_GASTOS.delete(obj.ID);
+                                DAL.BILLETERA_GASTOS.setSaldo(idProv, monto);
+                            }
+                        }
+
+
+                        int pagos = DAL.CTACTE_GASTOS.getPagos(
+                            item.ID_PROVEEDOR, item.PTO_VTA, item.NRO_CTE);
+                        //BUSCO EL MOVIMIENTO DE GENERACION DE DEUDA
+                        DAL.CTACTE_GASTOS objMov1 =
+                            DAL.CTACTE_GASTOS.readDeuda(item.ID_PROVEEDOR,
+                            item.PTO_VTA, item.NRO_CTE).Find(
+                            c => c.TIPO_MOVIMIENTO == 1);
+                        //EN CASO QUE EL PERIODO TENGA UN SOLO MOVIMIENTO DE PAGO
+                        //SEA TOTAL O PARCIAL REALIZO OPERACIONES DE ANULAR PAGO COMPLETO
+                        if (pagos == 1)
+                        {
+                            DAL.ANULA_RECIBO.cancelaPagoCompletoMovTipo_1Gastos(objMov1);
+                            item.ID_USUARIO_ANULA = idUsuario;
+                            item.OBS = obs;
+                            DAL.ANULA_RECIBO.cancelaPagoCompletoMovTipo_2Gastos(item);
+                            DAL.ANULA_RECIBO.eliminaGastos(item);
+                            DAL.FACTURAS_X_OP objFoP =
+                                DAL.FACTURAS_X_OP.getByFactura(objMov1.ID);
+                            DAL.ORDENES_PAGO objOrden =
+                                DAL.ORDENES_PAGO.getByPk(objFoP.ID_OP);
+                            DAL.ORDENES_PAGO.pagoCuentaOrden(
+                                objFoP.ID_OP, -item.HABER, objOrden.SALDO + 
+                                item.HABER);
+                            DAL.ORDENES_PAGO.autorizarOrden(objOrden);
+                            //if (item.TIPO_MOVIMIENTO == 1)
+                            //DAL.CTACTE_EXPENSAS.recalculo(DateTime.Now, objMov1.PERIODO, objMov1.NRO_CTA, objMov1.ID);
+                            //if (item.TIPO_MOVIMIENTO == 3)
+                            //    DAL.CTACTE_EXPENSAS.recalculoPlan(DateTime.Now, item.PERIODO, item.NRO_CTA, item.ID, item.NRO_PLAN_PAGO);
+                        }
+                        else
+                        {
+                            if (pagos > 1)
+                            {
+                                //EN CASO QUE EL PERIODO TENGA MAS DE UN MOVIMIENTO DE PAGO
+                                //VERIFICO QUE SE INTENTA ELIMINAR EL ULTIMO, DE NO SER ASI SE ANULA EL PROCESO
+                                List<DAL.CTACTE_GASTOS> lstPagos = 
+                                    DAL.CTACTE_GASTOS.readPagos(item.ID_PROVEEDOR,
+                                    item.PTO_VTA, item.NRO_CTE);
+
+
+                                if (lstPagos[lstPagos.Count - 1] != null)
+                                {
+                                    if (nro_recibo == 
+                                        lstPagos[lstPagos.Count - 1].NRO_RECIBO_PAGO)
+                                    {
+                                        lstPagos[lstPagos.Count - 1].ID_USUARIO_ANULA = idUsuario;
+                                        lstPagos[lstPagos.Count - 1].OBS = obs;
+                                        DAL.ANULA_RECIBO.cancelaPagoCompletoMovTipo_2Gastos(lstPagos[lstPagos.Count - 1]);
+
+                                        DAL.ANULA_RECIBO.cancelaPagoParcialMovTipo_1Gastos(
+                                            lstPagos[lstPagos.Count - 1].ID_PROVEEDOR,
+                                            lstPagos[lstPagos.Count - 1].PTO_VTA,
+                                            lstPagos[lstPagos.Count - 1].NRO_CTE,
+                                            lstPagos[lstPagos.Count - 1].HABER,
+                                            lstPagos[lstPagos.Count - 2].FECHA
+                                            );
+
+
+                                        DAL.ANULA_RECIBO.eliminaGastos(lstPagos[lstPagos.Count - 1]);
+
+                                        DAL.FACTURAS_X_OP objFoP =
+                                DAL.FACTURAS_X_OP.getByFactura(objMov1.ID);
+                                        DAL.ORDENES_PAGO objOrden =
+                                            DAL.ORDENES_PAGO.getByPk(
+                                                objFoP.ID_OP);
+                                        DAL.ORDENES_PAGO.pagoCuentaOrden(
+                                            objFoP.ID_OP, -item.HABER, 
+                                            objOrden.DEBE-item.HABER);
+                                        //DAL.CTACTE_EXPENSAS.recalculo(DateTime.Now, objMov1.PERIODO, objMov1.NRO_CTA, objMov1.ID);
+                                    }
+                                    else
+                                    {
+                                        return lstPagos[lstPagos.Count - 1].NRO_RECIBO_PAGO;
+                                    }
+                                }
+                            }
+                        }
+
+
+                    }
+
+
+                    //ENVIA DINERO A BILLETERA
+                    //DAL.MOV_BILLETERA_GASTOS objBilletera1 =
+                    //    DAL.MOV_BILLETERA_GASTOS.getByNroRecibo(nro_recibo);
+                    //DAL.MOV_BILLETERA_GASTOS objBilletera2 =
+                    //    DAL.MOV_BILLETERA_GASTOS.getByNroRecibo2(nro_recibo);
+                    //if (objBilletera1 != null)
+                    //{
+                    //    int idProv = lst[0].ID_PROVEEDOR;
+                    //    decimal monto = objBilletera1.MONTO;
+
+                    //    DAL.MOV_BILLETERA_GASTOS obj = new DAL.MOV_BILLETERA_GASTOS();
+                    //    obj.FECHA = DateTime.Now;
+
+                    //    obj.ID_PROVEEDOR = idProv;
+                    //    obj.MONTO = monto;
+
+                    //    obj.NRO_RECIBO = nro_recibo;
+                    //    obj.TIPO_MOVIMIENTO = 2;
+                    //    obj.FECHA_CARGA = DateTime.Now;
+                    //    obj.ID_USUARIO_CARGA = Convert.ToInt32(idUsuario);
+                    //    DAL.MOV_BILLETERA_GASTOS.insert(obj);
+                    //    DAL.BILLETERA_GASTOS.setSaldo(idProv, monto - (monto * 2));
+                    //}
+
+                    ////UTILIZA DINERO DE BILLETERA
+
+                    //if (objBilletera2 != null)
+                    //{
+                    //    DAL.MOV_BILLETERA_GASTOS obj = new DAL.MOV_BILLETERA_GASTOS();
+                    //    obj.FECHA = DateTime.Now;
+
+                    //    obj.MONTO = objBilletera2.MONTO;
+                    //    obj.ID_PROVEEDOR = lst[0].ID_PROVEEDOR;
+                    //    obj.NRO_RECIBO = nro_recibo;
+                    //    obj.TIPO_MOVIMIENTO = 1;
+                    //    obj.FECHA_CARGA = DateTime.Now;
+                    //    obj.ID_USUARIO_CARGA = Convert.ToInt32(idUsuario);
+                    //    DAL.MOV_BILLETERA_GASTOS.insert(obj);
+                    //    DAL.BILLETERA_GASTOS.setSaldo(objBilletera2.ID_PROVEEDOR, objBilletera2.MONTO);
+                    //}
+                    /*                                   
+                                        */
+                    scope.Complete();
+                    return ret;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

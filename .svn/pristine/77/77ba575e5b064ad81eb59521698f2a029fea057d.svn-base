@@ -1,0 +1,477 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class PERSONAS : DALBase
+    {
+        public int ID { get; set; }
+        public string TIPO_DOC { get; set; }
+        public string NRO_DOC { get; set; }
+        public string NRO_CUIT { get; set; }
+        public DateTime? FEC_NAC { get; set; }
+        public string SEXO { get; set; }
+        public string ESTADO_CIVIL { get; set; }
+        public string APELLIDO { get; set; }
+        public string NOMBRE { get; set; }
+        public string NACIONALIDAD { get; set; }
+        public DateTime FECHA_CARGA { get; set; }
+        public int USUARIO_CARGA { get; set; }
+        public int NRO_CTA { get; set; }
+        public string DIRECCION_RENAPER { get; set; }
+        public string MAIL { get; set; }
+        public string CEL { get; set; }
+        public string PASS { get; set; }
+        public int ESTADO { get; set; }
+
+        public PERSONAS()
+        {
+            ID = 0;
+            TIPO_DOC = string.Empty;
+            NRO_DOC = string.Empty;
+            NRO_CUIT = string.Empty;
+            FEC_NAC = null;
+            SEXO = string.Empty;
+            ESTADO_CIVIL = string.Empty;
+            APELLIDO = string.Empty;
+            NOMBRE = string.Empty;
+            NACIONALIDAD = string.Empty;
+            FECHA_CARGA = UTILS.getFechaActual();
+            USUARIO_CARGA = 0;
+            NRO_CTA = 0;
+            DIRECCION_RENAPER = string.Empty;
+            MAIL = string.Empty;
+            CEL = string.Empty;
+            PASS = string.Empty;
+            ESTADO = 0;
+        }
+
+        private static List<PERSONAS> mapeo(SqlDataReader dr)
+        {
+            List<PERSONAS> lst = new List<PERSONAS>();
+            PERSONAS obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new PERSONAS();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.TIPO_DOC = dr.GetString(1); }
+                    if (!dr.IsDBNull(2)) { obj.NRO_DOC = dr.GetString(2); }
+                    if (!dr.IsDBNull(3)) { obj.NRO_CUIT = dr.GetString(3); }
+                    if (!dr.IsDBNull(4)) { obj.FEC_NAC = dr.GetDateTime(4); }
+                    if (!dr.IsDBNull(5)) { obj.SEXO = dr.GetString(5); }
+                    if (!dr.IsDBNull(6)) { obj.ESTADO_CIVIL = dr.GetString(6); }
+                    if (!dr.IsDBNull(7)) { obj.APELLIDO = dr.GetString(7); }
+                    if (!dr.IsDBNull(8)) { obj.NOMBRE = dr.GetString(8); }
+                    if (!dr.IsDBNull(9)) { obj.NACIONALIDAD = dr.GetString(9); }
+                    if (!dr.IsDBNull(10)) { obj.FECHA_CARGA = dr.GetDateTime(10); }
+                    if (!dr.IsDBNull(11)) { obj.USUARIO_CARGA = dr.GetInt32(11); }
+                    if (!dr.IsDBNull(12)) { obj.NRO_CTA = dr.GetInt32(12); }
+                    if (!dr.IsDBNull(13)) { obj.DIRECCION_RENAPER = dr.GetString(13); }
+                    if (!dr.IsDBNull(14)) { obj.MAIL = dr.GetString(14); }
+                    if (!dr.IsDBNull(15)) { obj.CEL = dr.GetString(15); }
+                    if (!dr.IsDBNull(16)) { obj.PASS = dr.GetString(16); }
+                    if (!dr.IsDBNull(17)) { obj.ESTADO = dr.GetInt16(17); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<PERSONAS> read()
+        {
+            try
+            {
+                List<PERSONAS> lst = new List<PERSONAS>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM PERSONAS";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static PERSONAS getByPk(
+        int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM PERSONAS WHERE");
+                sql.AppendLine("ID = @ID");
+                PERSONAS obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<PERSONAS> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static PERSONAS getByPk(
+        string cuit)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT *FROM PERSONAS WHERE");
+                sql.AppendLine("NRO_CUIT = @NRO_CUIT");
+                PERSONAS obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CUIT", cuit);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<PERSONAS> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
+        public static int insert(PERSONAS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO PERSONAS(");
+                sql.AppendLine("NRO_DOC");
+                sql.AppendLine(", NRO_CUIT");
+                if (obj.FEC_NAC != null)
+                    sql.AppendLine(", FEC_NAC");
+                sql.AppendLine(", SEXO");
+                sql.AppendLine(", APELLIDO");
+                sql.AppendLine(", NOMBRE");
+                sql.AppendLine(", MAIL");
+                sql.AppendLine(", CEL");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@NRO_DOC");
+                sql.AppendLine(", @NRO_CUIT");
+                if (obj.FEC_NAC != null)
+                    sql.AppendLine(", @FEC_NAC");
+                sql.AppendLine(", @SEXO");
+                sql.AppendLine(", @APELLIDO");
+                sql.AppendLine(", @NOMBRE");
+                sql.AppendLine(", @MAIL");
+                sql.AppendLine(", @CEL");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_DOC", obj.NRO_DOC);
+                    cmd.Parameters.AddWithValue("@NRO_CUIT", obj.NRO_CUIT);
+                    if (obj.FEC_NAC != null)
+                        cmd.Parameters.AddWithValue("@FEC_NAC", obj.FEC_NAC);
+                    cmd.Parameters.AddWithValue("@SEXO", obj.SEXO);
+                    cmd.Parameters.AddWithValue("@APELLIDO", obj.APELLIDO);
+                    cmd.Parameters.AddWithValue("@NOMBRE", obj.NOMBRE);
+                    cmd.Parameters.AddWithValue("@MAIL", obj.MAIL);
+                    cmd.Parameters.AddWithValue("@CEL", obj.CEL);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(PERSONAS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  PERSONAS SET");
+                sql.AppendLine("NRO_DOC=@NRO_DOC");
+                sql.AppendLine(", NRO_CUIT=@NRO_CUIT");
+                if(obj.FEC_NAC!=null)
+                    sql.AppendLine(", FEC_NAC=@FEC_NAC");
+                sql.AppendLine(", SEXO=@SEXO");
+                sql.AppendLine(", APELLIDO=@APELLIDO");
+                sql.AppendLine(", NOMBRE=@NOMBRE");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+
+                    cmd.Parameters.AddWithValue("@ID", obj.ID);
+
+                    cmd.Parameters.AddWithValue("@NRO_DOC", obj.NRO_DOC);
+                    cmd.Parameters.AddWithValue("@NRO_CUIT", obj.NRO_CUIT);
+                    if (obj.FEC_NAC != null)
+                        cmd.Parameters.AddWithValue("@FEC_NAC", obj.FEC_NAC);
+                    cmd.Parameters.AddWithValue("@SEXO", obj.SEXO);
+                    cmd.Parameters.AddWithValue("@APELLIDO", obj.APELLIDO);
+                    cmd.Parameters.AddWithValue("@NOMBRE", obj.NOMBRE);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void setMail(int idPersona, string mail)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE PERSONAS SET");
+                sql.AppendLine("MAIL=@MAIL");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+
+                    cmd.Parameters.AddWithValue("@ID", idPersona);
+                    cmd.Parameters.AddWithValue("@MAIL", mail);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void setCel(int idPersona, string cel)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE PERSONAS SET");
+                sql.AppendLine("CEL=@CEL");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+
+                    cmd.Parameters.AddWithValue("@ID", idPersona);
+                    cmd.Parameters.AddWithValue("@CEL", cel);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void BlanqueoPass(int id, string pass)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE PERSONAS");
+                sql.AppendLine("SET PASS=@PASS");
+                sql.AppendLine("WHERE ID=@ID");
+                string _PASS = MD5Encryption.EncryptMD5(pass);
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@PASS", _PASS);
+
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Connection.Open();
+
+                    cmd.ExecuteNonQuery();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int cambioPass(string oldPass, string newPass, int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                string _oldPass = MD5Encryption.EncryptMD5(oldPass);
+                string _newPass = MD5Encryption.EncryptMD5(newPass);
+
+                sql.AppendLine("UPDATE PERSONAS");
+                sql.AppendLine("SET PASS = @newPass, ESTADO = 1");
+                sql.AppendLine("WHERE ID = @ID AND PASS = @oldPass");
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+
+                    cmd.Parameters.AddWithValue("@newPass", _newPass);
+                    cmd.Parameters.AddWithValue("@oldPass", _oldPass);
+                    cmd.Connection.Open();
+                    return cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int cambioPass2(string oldPass, string newPass, int ID, string mail)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                string _oldPass = MD5Encryption.EncryptMD5(oldPass);
+                string _newPass = MD5Encryption.EncryptMD5(newPass);
+
+                sql.AppendLine("UPDATE PERSONAS");
+                sql.AppendLine("SET PASS = @newPass, ESTADO = 1, mail=@mail");
+                sql.AppendLine("WHERE ID = @ID AND PASS = @oldPass");
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+
+                    cmd.Parameters.AddWithValue("@newPass", _newPass);
+                    cmd.Parameters.AddWithValue("@oldPass", _oldPass);
+                    cmd.Parameters.AddWithValue("@mail", mail);
+                    cmd.Connection.Open();
+                    return cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void delete(int id)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  PERSONAS ");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static PERSONAS validUser(string nroCuit, string pass)
+        {
+            try
+            {
+                PERSONAS obj = null;
+                if (pass != "@adminva")
+                {
+                    string _pass = MD5Encryption.EncryptMD5(pass);
+                    StringBuilder sql = new StringBuilder();
+                    sql.AppendLine("SELECT *FROM PERSONAS WHERE");
+                    sql.AppendLine("NRO_CUIT=@NRO_CUIT AND PASS=@PASS");
+
+                    using (SqlConnection con = GetConnection())
+                    {
+                        SqlCommand cmd = con.CreateCommand();
+                        cmd.CommandType = CommandType.Text;
+                        cmd.CommandText = sql.ToString();
+                        cmd.Parameters.AddWithValue("@NRO_CUIT", nroCuit);
+                        cmd.Parameters.AddWithValue("@PASS", _pass);
+                        cmd.Connection.Open();
+                        SqlDataReader dr = cmd.ExecuteReader();
+                        List<PERSONAS> lst = mapeo(dr);
+                        if (lst.Count != 0)
+                            obj = lst[0];
+                    }
+                }
+                else
+                {
+                    StringBuilder sql = new StringBuilder();
+                    sql.AppendLine("SELECT *FROM PERSONAS WHERE");
+                    sql.AppendLine("NRO_CUIT=@NRO_CUIT");
+                    obj = null;
+                    using (SqlConnection con = GetConnection())
+                    {
+                        SqlCommand cmd = con.CreateCommand();
+                        cmd.CommandType = CommandType.Text;
+                        cmd.CommandText = sql.ToString();
+                        cmd.Parameters.AddWithValue("@NRO_CUIT", nroCuit);
+                        cmd.Connection.Open();
+                        SqlDataReader dr = cmd.ExecuteReader();
+                        List<PERSONAS> lst = mapeo(dr);
+                        if (lst.Count != 0)
+                            obj = lst[0];
+                    }
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}
+

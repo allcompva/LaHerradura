@@ -1,0 +1,380 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="MPBack.master.cs"
+    Inherits="LaHerradura.MP.MPBack" %>
+
+<!DOCTYPE html>
+
+<html>
+<head runat="server">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>LaHerradura</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport" />
+    <!-- Bootstrap 3.3.7 -->
+    <link href="../App_Themes/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Font Awesome -->
+    <%--<link href="../App_Themes/bower_components/font-awesome/css/font-awesome.min.css" rel="stylesheet" />--%>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" />
+    <link href="../App_Themes/bower_components/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+    <link href="../App_Themes/bower_components/Ionicons/css/ionicons.min.css" rel="stylesheet" />
+    <!-- Theme style -->
+    <link href="../App_Themes/AdminLTE/css/AdminLTE.min.css" rel="stylesheet" />
+    <!-- AdminLTE Skins. Choose a skin from the css/skins
+       folder instead of downloading all of them to reduce the load. -->
+    <link href="../App_Themes/AdminLTE/css/skins/_all-skins.css" rel="stylesheet" />
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+  <![endif]-->
+
+    <!-- Google Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic" />
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body class="skin-blue layout-top-nav" style="height: auto; min-height: 100%;">
+    <form id="form1" runat="server">
+        <div class="wrapper" style="height: auto; min-height: 100%;">
+
+            <header class="main-header">
+                <nav class="navbar navbar-static-top">
+                    <div class="container-fluid">
+                        <div class="navbar-header">
+                            <a href="../Back/Home.aspx" class="navbar-brand"><b>La </b>Herradura</a>
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse" aria-expanded="false">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                        </div>
+
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="navbar-collapse pull-left collapse" id="navbar-collapse" aria-expanded="false" style="height: 1px;">
+                            <ul class="nav navbar-nav">
+                                <li class="active" id="liInmuebles" runat="server">
+                                    <a href="../Back/cuentas.aspx">Inmuebles 
+                                    <span class="sr-only"></span></a></li>
+
+                                <li class="dropdown" id="li2" runat="server">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                                        aria-expanded="false">Expensas <span class="caret"></span></a>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li id="liExpensas" runat="server">
+                                            <a href="../Back/expensas.aspx">Liquidaciones</a></li>
+                                        <li id="li3" runat="server">
+                                            <a href="../Back/EnvioComprobantes.aspx">Envio Comprobantes</a></li>
+                                    </ul>
+                                </li>
+                                <li class="dropdown" id="li4" runat="server">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                                        aria-expanded="false">Proveedores / Gastos<span class="caret"></span></a>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li><a href="../Proveedores/Proveedores.aspx">ABM Proveedores</a></li>
+                                        <li><a href="../Proveedores/CtaCteGastos1.aspx">Cuentas corrientes</a></li>
+                                        <li><a href="../Proveedores/AutorizarOPago.aspx">Ordenes de pago</a></li>
+                                    </ul>
+                                </li>
+                                <li class="dropdown" id="li6" runat="server">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                                        aria-expanded="false">Caja<span class="caret"></span></a>
+                                    <ul class="dropdown-menu" role="menu">
+<%--                                        <li><a href="#" id="btnCaja" runat="server"
+                                            onserverclick="btnCaja_ServerClick">Caja</a></li>--%>
+                                        <li><a href="../Back/ListaCajas.aspx">
+                                            Planillas Caja</a></li>
+<%--                                        <li><a href="../Back/apertura_caja.aspx">
+                                            Abrir Caja</a></li>--%>
+                                        <li><a href="../Back/Facturacion.aspx">
+                                            Facturación</a></li>
+                                        <li id="li5" runat="server">
+                                            <a href="../Back/EmitoComprobantes.aspx">Emito Notas de Crédito</a>
+                                        </li>
+                                        <li id="li8" runat="server">
+                                            <a href="../Back/Facturacion_Intereses.aspx">Facturación Intereses</a>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li class="dropdown" id="liConfig" runat="server">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                                        aria-expanded="false">Configuración <span class="caret"></span></a>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li><a href="../Back/ConceptosExpensa.aspx">Conceptos expensas</a></li>
+                                        <li><a href="../Back/Usuarios.aspx">Usuario</a></li>                                    
+                                    </ul>
+                                </li>
+                                <li class="dropdown" id="li7" runat="server">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                                        aria-expanded="false">Contabilidad <span class="caret"></span></a>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li><a href="../Back/Asientos.aspx">Libro Diario</a></li>
+                                        <li><a href="../Back/LibroMayor.aspx">Libro Mayor</a></li>
+                                        <li><a href="../Back/Balance_Sumas_Saldos.aspx">Balance Sumas y Saldos</a></li>
+                                        <li><a href="../Back/Iva_Ventas.aspx">Iva Ventas</a></li>   
+                                        <li><a href="../Back/Iva_Compras.aspx">Iva Compras</a></li>                                           
+                                    </ul>
+                                </li>
+                                <li class="dropdown" id="li1" runat="server">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                                        aria-expanded="false">Informes <span class="caret"></span></a>
+                                    <ul class="dropdown-menu" role="menu">
+                                        <li><a href="../Back/InfDeuda.aspx">Informe Deuda</a></li>
+                                        <li><a href="../Back/InfMora.aspx">Informe Mora</a></li>
+                                        <li><a href="../Back/InfPagos.aspx">Informe Pagos</a></li>
+                                        <li><a href="../Back/InfPlanes.aspx">Informe Planes</a></li>
+                                        <li><a href="../Back/InformeGastos.aspx">Informe Gastos</a></li>
+                                        <li><a href="../Back/InformePagoProveedores.aspx">Informe Pago Proveedores</a></li>
+                                        <li><a href="../Back/InformeSaldos.aspx">Informe Saldos</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <!-- /.navbar-collapse -->
+                        <!-- Navbar Right Menu -->
+                        <div class="navbar-custom-menu">
+                            <ul class="nav navbar-nav">
+                                <!-- Messages: style can be found in dropdown.less-->
+                                <li class="dropdown messages-menu">
+                                    <!-- Menu toggle button -->
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fa fa-envelope-o"></i>
+                                        <span class="label label-success"></span>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li class="header"></li>
+                                        <li>
+                                            <!-- inner menu: contains the messages 
+                                            <ul class="menu">
+                                                <li>
+                                                    <a href="#">
+                                                        <div class="pull-left">
+                                                            <img src="../App_Themes/AdminLTE/img/user2-160x160.jpg" class="img-circle" 
+                                                                alt="User Image"/>
+                                                        </div>
+                                                        <h4>Support Team
+                          <small><i class="fa fa-clock-o"></i>5 mins</small>
+                                                        </h4>
+                                                        <p>Why not buy a new awesome theme?</p>
+                                                    </a>
+                                                </li>
+                                            </ul>-->
+                                            <!-- /.menu -->
+                                        </li>
+                                        <li class="footer"><a href="#">Ver todos los mensajes</a></li>
+                                    </ul>
+                                </li>
+                                <!-- /.messages-menu -->
+
+                                <!-- Notifications Menu
+                                <li class="dropdown notifications-menu">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fa fa-bell-o"></i>
+                                        <span class="label label-warning"></span>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <li class="header">You have 10 notifications</li>
+                                        <li>
+                                            <ul class="menu">
+                                                <li>
+                                                    <a href="#">
+                                                        <i class="fa fa-users text-aqua"></i>5 new members joined today
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                        <li class="footer"><a href="#">Ver todas</a></li>
+                                    </ul>
+                                </li>
+ -->
+                                <!-- User Account Menu -->
+                                <li class="dropdown user user-menu">
+                                    <!-- Menu Toggle Button -->
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                                        <!-- The user image in the navbar-->
+                                        <img src="../img/Usuario.jpg"
+                                            class="user-image" alt="User Image" />
+                                        <!-- hidden-xs hides the username on small devices so only the image appears. -->
+                                        <span class="hidden-xs" id="lblUsuario"
+                                            runat="server"></span>
+                                    </a>
+                                    <ul class="dropdown-menu">
+                                        <!-- The user image in the menu -->
+                                        <li class="user-header">
+                                            <img src="../img/Usuario.jpg" class="img-circle"
+                                                alt="User Image" />
+
+                                            <p id="lblUsuario2" runat="server">
+                                            </p>
+                                        </li>
+                                        <!-- Menu Body -->
+                                        <li class="user-body">
+                                            <div class="row">
+                                                <div class="col-md-12 text-center">
+                                                    <a href="#" class="btn btn-default btn-block">Datos Personales</a>
+                                                </div>
+                                                <div class="col-md-12 text-center" style="margin-top: 5px;">
+                                                    <a href="#" onclick="abrirCambioPass();" class="btn btn-default btn-block">Cambiar Contraseña</a>
+                                                </div>
+                                            </div>
+                                            <!-- /.row -->
+                                        </li>
+                                        <!-- Menu Footer-->
+                                        <li class="user-footer">
+                                            <div>
+                                                <a href="#" class="btn btn-default btn-block"
+                                                    runat="server" id="btnSalr"
+                                                    onserverclick="btnSalr_ServerClick">Salir</a>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <!-- /.navbar-custom-menu -->
+                    </div>
+                    <!-- /.container-fluid -->
+                </nav>
+            </header>
+            <!-- Full Width Column -->
+            <div class="content-wrapper" style="min-height: 330px;">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-danger alert-dismissible"
+                                role="alert" id="divError" runat="server">
+                                <strong>Error!</strong>
+                                <p id="msgError" runat="server"></p>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-success alert-dismissible"
+                                role="alert" id="divOk" runat="server">
+                                <strong>Ok!</strong>
+                                <p id="msgOk" runat="server"></p>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+<%--                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="alert alert-danger"
+                                role="alert" id="div1" runat="server">
+                                <strong>¡Atencion!</strong>
+                                <strong id="P1" style="font-size:20px; color:white;" 
+                                    runat="server">Sistema trabajando sobre Base de datos de PRUEBA</strong>
+                                <p style="font-size:16px; color:white;">Utilizar solo para realizar pruebas de funcionamiento</p>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>--%>
+                    <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+                    </asp:ContentPlaceHolder>
+                </div>
+                <!-- /.container -->
+            </div>
+            <!-- /.content-wrapper -->
+            <footer class="main-footer">
+                <div class="container">
+                    <div class="pull-right hidden-xs">
+                        <b>Version</b> 2.4.13
+                    </div>
+                    <strong>Copyright © 2014-2019 <a href="https://adminlte.io">AdminLTE</a>.</strong> All rights
+      reserved.
+                </div>
+                <!-- /.container -->
+            </footer>
+        </div>
+
+        <div class="modal fade in" id="modalCambioPass">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <asp:Panel ID="Panel1" runat="server" DefaultButton="btnCambioPass">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span></button>
+                            <h4 class="modal-title">Cambiar contraseña</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Clave actual</label>
+                                <asp:TextBox ID="txtOldPass" CssClass="form-control"
+                                    runat="server" TextMode="Password"></asp:TextBox>
+                                <asp:RequiredFieldValidator ID="rv1" runat="server"
+                                    Display="Dynamic"
+                                    ErrorMessage="Ingrese la clave actual" ForeColor="Red"
+                                    ControlToValidate="txtOldPass" ValidationGroup="pass">
+                                </asp:RequiredFieldValidator>
+                            </div>
+                            <div class="form-group">
+                                <label>Nueva clave</label>
+                                <asp:TextBox ID="txtNewPass" CssClass="form-control"
+                                    runat="server" TextMode="Password"></asp:TextBox>
+                                <asp:RequiredFieldValidator ID="rv2" runat="server"
+                                    Display="Dynamic"
+                                    ErrorMessage="Ingrese la nueva clave" ForeColor="Red"
+                                    ControlToValidate="txtNewPass" ValidationGroup="pass">
+                                </asp:RequiredFieldValidator>
+                            </div>
+                            <div class="form-group">
+                                <label>Reingresá la nueva clave</label>
+                                <asp:TextBox ID="txtNewPass2" CssClass="form-control"
+                                    runat="server" TextMode="Password"></asp:TextBox>
+                                <asp:RequiredFieldValidator ID="rv3" runat="server"
+                                    Display="Dynamic"
+                                    ErrorMessage="Reingrese la nueva clave" ForeColor="Red"
+                                    ControlToValidate="txtNewPass2" ValidationGroup="pass">
+                                </asp:RequiredFieldValidator>
+                                <asp:CompareValidator ID="cv1" runat="server"
+                                    Display="Dynamic"
+                                    ErrorMessage="Las claves ingresadas no coinciden" ForeColor="Red"
+                                    ValidationGroup="pass" ControlToValidate="txtNewPass2"
+                                    ControlToCompare="txtNewPass"></asp:CompareValidator>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button data-dismiss="modal" class="btn btn-default">Cancelar</button>
+                            <asp:Button ID="btnCambioPass" ValidationGroup="pass" CssClass="btn btn-primary"
+                                OnClick="btnCambioPass_Click" runat="server" Text="Aceptar" />
+                        </div>
+                    </asp:Panel>
+                </div>
+            </div>
+        </div>
+
+        <!-- jQuery 3 -->
+        <script src="../App_Themes/bower_components/jquery/dist/jquery.min.js"></script>
+        <!-- jQuery UI 1.11.4 -->
+        <script src="../App_Themes/bower_components/jquery-ui/jquery-ui.min.js"></script>
+        <!-- Resolve conflict in jQuery UI tooltip with Bootstrap tooltip -->
+        <script>
+            $.widget.bridge('uibutton', $.ui.button);
+        </script>
+        <!-- Bootstrap 3.3.7 -->
+        <script src="../App_Themes/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+
+
+        <!-- AdminLTE App -->
+        <script src="../App_Themes/AdminLTE/js/adminlte.min.js"></script>
+        <!-- AdminLTE dashboard demo (This is only for demo purposes) -->
+        <script src="../App_Themes/AdminLTE/js/pages/dashboard.js?id=1"></script>
+        <!-- AdminLTE for demo purposes -->
+        <script src="../App_Themes/AdminLTE/js/demo.js"></script>
+
+        <script>
+            function abrirCambioPass() {
+                $('#modalCambioPass').modal('show');
+            }
+        </script>
+    </form>
+</body>
+</html>

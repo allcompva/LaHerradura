@@ -1,0 +1,83 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DAL
+{
+    public class FACTURACION_INTERESES : DALBase
+    {
+        public int ID { get; set; }
+        public DateTime FECHA { get; set; }
+        public int NRO_CTA { get; set; }
+        public int NRO_RECIBO { get; set; }
+        public decimal MONTO { get; set; }
+
+        public FACTURACION_INTERESES()
+        {
+            ID = 0;
+            FECHA = UTILS.getFechaActual();
+            NRO_CTA = 0;
+            NRO_RECIBO = 0;
+            MONTO = 0;
+        }
+
+        private static List<FACTURACION_INTERESES> mapeo(SqlDataReader dr)
+        {
+            List<FACTURACION_INTERESES> lst = new List<FACTURACION_INTERESES>();
+            FACTURACION_INTERESES obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new FACTURACION_INTERESES();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.FECHA = dr.GetDateTime(1); }
+                    if (!dr.IsDBNull(2)) { obj.NRO_CTA = dr.GetInt32(2); }
+                    if (!dr.IsDBNull(3)) { obj.NRO_RECIBO = dr.GetInt32(3); }
+                    if (!dr.IsDBNull(4)) { obj.MONTO = dr.GetDecimal(4); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<FACTURACION_INTERESES> read(int mes, int anio)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT ID, CONVERT(date, FECHA) AS FECHA, NRO_CTA, NRO_RECIBO_PAGO,");
+                sql.AppendLine("SUM(INTERES_PAGADO) AS MONTO");
+                sql.AppendLine("FROM CTACTE_EXPENSAS");
+                sql.AppendLine("WHERE TIPO_MOVIMIENTO=2 AND INTERES_PAGADO > 0");
+                sql.AppendLine("AND MONTH(FECHA)=@MES AND YEAR(FECHA)=@ANIO");
+                sql.AppendLine("AND NRO_RECIBO_PAGO NOT IN (");
+                sql.AppendLine("SELECT ID_COMPROBANTE FROM FACTURAS_X_EXPENSA");
+                sql.AppendLine("WHERE TIPO_COMPROBANTE=12)");
+                sql.AppendLine("GROUP BY ID, CONVERT(date, FECHA), NRO_CTA, NRO_RECIBO_PAGO");
+
+                List<FACTURACION_INTERESES> lst = new List<FACTURACION_INTERESES>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@MES", mes);
+                    cmd.Parameters.AddWithValue("@ANIO", anio);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

@@ -1,0 +1,132 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Transactions;
+
+namespace BLL
+{
+    public class CONCEPTOS_EXPENSA
+    {
+        public static void insertMasivo(int idConcepto, int cant, DateTime fecha, string obs, 
+            int periodo, int usuario)
+        {
+            try
+            {
+                using (TransactionScope scope = new TransactionScope())
+                {
+                    List<DAL.INMUEBLES> lst = DAL.INMUEBLES.read();
+                    foreach (var item in lst)
+                    {
+                        DAL.CONCEPTOS_X_INMUEBLE obj = new DAL.CONCEPTOS_X_INMUEBLE();
+                        DAL.CONCEPTOS_EXPENSA oConcepto = BLL.CONCEPTOS_EXPENSA.getByPk(idConcepto);
+                        obj.CANT = cant;
+                        obj.COSTO = oConcepto.MONTO;
+                        obj.FECHA = Convert.ToDateTime(fecha);
+                        obj.FECHA_CARGA = DateTime.Now;
+                        obj.ID_CONCEPTO = idConcepto;
+                        obj.MASIVO = true;
+                        obj.NRO_CTA = item.NRO_CTA;
+                        obj.OBS = obs;
+                        obj.PERIODO = 0;
+                        obj.SUBTOTAL = obj.CANT * obj.COSTO;
+                        obj.NRO_ORDEN = DAL.CONCEPTOS_X_INMUEBLE.getMaxOrden(item.NRO_CTA, 0) + 1;
+                        obj.PERIODO = periodo;
+                        obj.USUARIO_CARGA = usuario;
+                        DAL.CONCEPTOS_X_INMUEBLE.insert(obj);
+                    }
+                    scope.Complete();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        
+        public static List<DAL.CONCEPTOS_EXPENSA> read()
+        {
+            try
+            {
+                return DAL.CONCEPTOS_EXPENSA.read();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static List<DAL.CONCEPTOS_EXPENSA> readActivos(int tipo)
+        {
+            try
+            {
+                return DAL.CONCEPTOS_EXPENSA.readActivos(tipo);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static DAL.CONCEPTOS_EXPENSA getByPk(int pk)
+        {
+            try
+            {
+                return DAL.CONCEPTOS_EXPENSA.getByPk(pk);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static int insert(DAL.CONCEPTOS_EXPENSA obj)
+        {
+            try
+            {
+                return DAL.CONCEPTOS_EXPENSA.insert(obj);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void activaDesactiva(int id, bool activa)
+        {
+            try
+            {
+                DAL.CONCEPTOS_EXPENSA.activaDesactiva(id, activa);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(DAL.CONCEPTOS_EXPENSA obj)
+        {
+            try
+            {
+                DAL.CONCEPTOS_EXPENSA.update(obj);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(int pk)
+        {
+            try
+            {
+                DAL.CONCEPTOS_EXPENSA.delete(pk);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

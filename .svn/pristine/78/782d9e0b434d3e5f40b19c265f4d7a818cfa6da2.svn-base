@@ -1,0 +1,353 @@
+﻿using CrystalDecisions.CrystalReports.Engine;
+using CrystalDecisions.Shared;
+using LaHerradura.Back.Reportes;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
+using System.Text;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+namespace LaHerradura.Back
+{
+    public partial class Print : System.Web.UI.Page
+    {
+        private ReportDocument customerReport;
+        CrystalDecisions.Web.CrystalReportViewer crview;
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                if (!IsPostBack)
+                {
+                    if (Request.QueryString["op"] != null)
+                    {
+                        switch (Request.QueryString["op"].ToString())
+                        {
+                            case "recibo":
+                                if (Request.QueryString["nroRecibo"] != null)
+                                {
+                                    int nroRecibo = Convert.ToInt32(Request.QueryString["nroRecibo"]);
+                                    ConfiguRerecibo(nroRecibo);
+                                }
+                                break;
+                            case "factura":
+                                ConfigureCrystalReports();
+                                break;
+                            case "comprobante":
+                                ConfigureComprobante();
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        private void ConfigureComprobante()
+        {
+            try
+            {
+                crview = new CrystalDecisions.Web.CrystalReportViewer();
+                customerReport = new ReportDocument();
+                int nroCta = Convert.ToInt32(Request.QueryString["nrocta"]);
+                int periodo = Convert.ToInt32(Request.QueryString["periodo"]);
+                int idCta = Convert.ToInt32(Request.QueryString["idcta"]);
+                int ptoVta = Convert.ToInt32(Request.QueryString["ptoVta"]);
+                Int64 nroCte = Convert.ToInt64(Request.QueryString["nroCte"]);
+                int tipo = Convert.ToInt32(Request.QueryString["tipo"]);
+
+                string reportPath = Server.MapPath("Factura2.rpt");
+                customerReport.PrintOptions.PaperSize = PaperSize.PaperA4;
+                customerReport.Load(reportPath);
+
+                List<DAL.PERSONAS_GRILLA> lstPer = DAL.PERSONAS_GRILLA.getByNroCta(nroCta);
+                DAL.FACTURAS_X_EXPENSA objF = DAL.FACTURAS_X_EXPENSA.getByPk(
+                    ptoVta, nroCte, tipo);
+                DAL.INMUEBLES objInm = DAL.INMUEBLES.getByNroCta(nroCta);
+                customerReport.SetParameterValue("tipoComp", "C");
+                customerReport.SetParameterValue("codTipoComp", tipo);
+                if (tipo == 11)
+                    customerReport.SetParameterValue("nombreTipoComp", "FACTURA");
+                if (tipo == 13)
+                    customerReport.SetParameterValue("nombreTipoComp", "NOTA DE CREDITO");
+                customerReport.SetParameterValue("nroComp", string.Format("{0}-{1}",
+                    objF.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                    objF.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0"))));
+                customerReport.SetParameterValue("fecha", objF.FECHA_CAE.ToShortDateString());
+                string propietarios = string.Empty;
+                string cuitper = string.Empty;
+                foreach (var item in lstPer)
+                {
+                    if (item.RESPONSABLE_FACTURACION)
+                        propietarios += string.Format("{0}, ", item.NOMBRE);
+                    cuitper = item.CUIT;
+                }
+                customerReport.SetParameterValue("propietario", propietarios);
+                customerReport.SetParameterValue("iva", "Consumidor Final");
+                customerReport.SetParameterValue("direccion", string.Format("{0} N° {1}",
+                    objInm.CALLE, objInm.NRO));
+                customerReport.SetParameterValue("condVenta", "-");
+                customerReport.SetParameterValue("cuit", string.Format("{0}-{1}-{2}",
+                    cuitper.Substring(0, 2), cuitper.Substring(2, 8), cuitper.Substring(10, 1)));
+                customerReport.SetParameterValue("nrocta", nroCta);
+                customerReport.SetParameterValue("periodo", string.Format("{0}-{1}/{2}",
+                    periodo.ToString().Substring(0, 4),
+                    periodo.ToString().Substring(4, 2),
+                    periodo.ToString().Substring(6, 2)));
+
+                customerReport.SetParameterValue("cant", 1);
+                customerReport.SetParameterValue("detalle", objF.DETALLE);
+                customerReport.SetParameterValue("preunit", objF.MONTO);
+                customerReport.SetParameterValue("cae", objF.CAE);
+                customerReport.SetParameterValue("vencCae", objF.CAE);
+
+                string cuit = ConfigurationManager.AppSettings["CUIT"].ToString();
+                string strCadena = Utils.Utils.ArmoCBarra(cuit, 11,
+objF.PTO_VTA, objF.CAE, objF.FECHA_CAE);
+
+                customerReport.SetParameterValue("codBarraAfip", strCadena);
+                crview.ReportSource = customerReport;
+
+                crview.RefreshReport();
+                crview.DataBind();
+                string per = string.Format("{0}-{1}_{2}",
+                    periodo.ToString().Substring(0, 4),
+                    periodo.ToString().Substring(4, 2),
+                    periodo.ToString().Substring(6, 2));
+                string fact = string.Format("{0}-{1}",
+                    objF.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                    objF.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0")));
+                customerReport.ExportToHttpResponse(ExportFormatType.PortableDocFormat,
+                    Response, false, string.Format("PER-{0} CTA-{1} FACT-{2}",
+                    per,
+                    nroCta.ToString().PadLeft(3, Convert.ToChar("0")),
+                    fact));
+
+
+            }
+
+            catch (Exception ex)
+            {
+                System.Console.WriteLine("Error, no se pudo generar el Reporte " + ex.Message);
+                Response.Write(ex.Message);
+            }
+            finally
+            {
+                ;
+            }
+        }
+
+
+        private void ConfigureCrystalReports()
+        {
+            try
+            {
+                crview = new CrystalDecisions.Web.CrystalReportViewer();
+                customerReport = new ReportDocument();
+                int nroCta = Convert.ToInt32(Request.QueryString["nrocta"]);
+                int periodo = Convert.ToInt32(Request.QueryString["periodo"]);
+                int idCta = Convert.ToInt32(Request.QueryString["idcta"]);
+
+                DAL.CTACTE_EXPENSAS objExpensa = DAL.CTACTE_EXPENSAS.getByPk(idCta);
+                DAL.LIQUIDACION_EXPENSAS objLiq = DAL.LIQUIDACION_EXPENSAS.getByPk(periodo);
+                DAL.INMUEBLES objInm = DAL.INMUEBLES.getByNroCta(nroCta);
+                List<DAL.PERSONAS_GRILLA> lstPer = DAL.PERSONAS_GRILLA.getByNroCta(nroCta);
+
+                TimeSpan diasMora2 = objLiq.VENCIMIENTO_2 - objLiq.VENCIMIENTO_1;
+                TimeSpan diasMora3 = objLiq.VENCIMIENTO_3 - objLiq.VENCIMIENTO_1;
+
+                string codBarra = LaHerradura.RapiPago.CodigoBarra.getCodigoBarra(
+                    objExpensa.NRO_CTA,
+                    objExpensa.PTO_VTA,
+                    objExpensa.NRO_CTE,
+                    objExpensa.MONTO_ORIGINAL - objLiq.MONTO_3 + objLiq.MONTO_1,
+                    objLiq.VENCIMIENTO_1,
+                    objLiq.MONTO_2 - objLiq.MONTO_1,
+                    diasMora2.Days,
+                    objLiq.MONTO_3 -
+                    objLiq.MONTO_1,
+                    diasMora3.Days);
+
+                string reportPath = Server.MapPath("Factura.rpt");
+                customerReport.PrintOptions.PaperSize = PaperSize.PaperA4;
+                customerReport.Load(reportPath);
+
+                List<DAL.DEUDA_ATRASADA> lstPagos = DAL.DEUDA_ATRASADA.read(nroCta, periodo);
+                customerReport.Subreports[0].SetDataSource(lstPagos);
+
+                customerReport.SetDataSource(DAL.DETALLE_DEUDA.read(periodo, nroCta));
+                if (lstPagos.Count > 0)
+                {
+                    customerReport.SetParameterValue(
+                        "deuda", "Al día de la fecha Ud. posee la siguiente deuda sin intereses:");
+                }
+                else
+                {
+                    customerReport.SetParameterValue(
+                        "deuda", ".");
+                }
+                customerReport.SetParameterValue("nroFactura", string.Format("{0}-{1}",
+                    objExpensa.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                    objExpensa.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0"))));
+                customerReport.SetParameterValue("fecha", objExpensa.FECHA_CAE.ToShortDateString());
+                string propietarios = string.Empty;
+                string cuitPer = string.Empty;
+                foreach (var item in lstPer)
+                {
+                    if (item.RESPONSABLE_FACTURACION)
+                    {
+                        propietarios += string.Format("{0}, ", item.NOMBRE);
+                        cuitPer = item.CUIT;
+                    }
+                }
+                foreach (var item in lstPer)
+                {
+                    if (item.RELACION == "Inquilino")
+                    {
+                        propietarios += string.Format("(Inquilinos: {0}), ", item.NOMBRE);
+                    }
+                }
+                customerReport.SetParameterValue("propietario", string.Format(
+                    "{0} (Manzana: {1} - Lote: {2})", propietarios,
+                    objInm.MANZANA, objInm.LOTE));
+                customerReport.SetParameterValue("direccion", string.Format("{0} N° {1}",
+                    objInm.CALLE, objInm.NRO));
+                customerReport.SetParameterValue("condVenta", string.Format("CUENTA CORRIENTE. VENCIMIENTO {0}",
+                    objLiq.VENCIMIENTO_1.ToShortDateString()));
+                customerReport.SetParameterValue("iva", "Consumidor Final");
+                customerReport.SetParameterValue("cuit", string.Format("{0}-{1}-{2}",
+                    cuitPer.Substring(0, 2), cuitPer.Substring(2, 8), cuitPer.Substring(10, 1)));
+                customerReport.SetParameterValue("periodo", string.Format("{0}-{1}/{2}",
+                    periodo.ToString().Substring(0, 4),
+                    periodo.ToString().Substring(4, 2),
+                    periodo.ToString().Substring(6, 2)));
+                customerReport.SetParameterValue("nrocta", nroCta);
+                customerReport.SetParameterValue("banelco", nroCta);
+                customerReport.SetParameterValue("codBarra", codBarra);
+                customerReport.SetParameterValue("nroCodBarra", codBarra);
+                customerReport.SetParameterValue("saldoAnt", 0);
+                customerReport.SetParameterValue("venc1", objLiq.VENCIMIENTO_1.ToShortDateString());
+                customerReport.SetParameterValue("venc2", objLiq.VENCIMIENTO_2.ToShortDateString());
+                customerReport.SetParameterValue("venc3", objLiq.VENCIMIENTO_3.ToShortDateString());
+                customerReport.SetParameterValue("monto1", objExpensa.MONTO_ORIGINAL -
+                    objLiq.MONTO_3 + objLiq.MONTO_1);
+                customerReport.SetParameterValue("monto2", objExpensa.MONTO_ORIGINAL -
+                    objLiq.MONTO_3 + objLiq.MONTO_2);
+                customerReport.SetParameterValue("monto3", objExpensa.MONTO_ORIGINAL);
+                customerReport.SetParameterValue("cae", objExpensa.CAE);
+                customerReport.SetParameterValue("vtocae", objExpensa.VENC_CAE);
+                customerReport.SetParameterValue("bonificacion", 0);
+                customerReport.SetParameterValue("nota", objLiq.NOTA_FACTURA);
+
+                string cuit = ConfigurationManager.AppSettings["CUIT"].ToString();
+                string strCadena = Utils.Utils.ArmoCBarra(cuit, 11,
+objExpensa.PTO_VTA, objExpensa.CAE, objExpensa.FECHA_CAE);
+
+                customerReport.SetParameterValue("codBarraAfip", strCadena);
+                crview.ReportSource = customerReport;
+
+                crview.RefreshReport();
+                crview.DataBind();
+                string per = string.Format("{0}-{1}_{2}",
+                    periodo.ToString().Substring(0, 4),
+                    periodo.ToString().Substring(4, 2),
+                    periodo.ToString().Substring(6, 2));
+                string fact = string.Format("{0}-{1}",
+                    objExpensa.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                    objExpensa.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0")));
+                customerReport.ExportToHttpResponse(ExportFormatType.PortableDocFormat,
+                    Response, false, string.Format("PER-{0} CTA-{1} FACT-{2}",
+                    per,
+                    nroCta.ToString().PadLeft(3, Convert.ToChar("0")),
+                    fact));
+            }
+
+            catch (Exception ex)
+            {
+                System.Console.WriteLine("Error, no se pudo generar el Reporte " + ex.Message);
+                Response.Write(ex.Message);
+            }
+            finally
+            {
+                ;
+            }
+        }
+        private void ConfiguRerecibo(int nroRecibo)
+        {
+            try
+            {
+                crview = new CrystalDecisions.Web.CrystalReportViewer();
+                customerReport = new ReportDocument();
+
+                List<DAL.CTACTE_EXPENSAS> lstCta = DAL.CTACTE_EXPENSAS.getByRecibo(nroRecibo);
+                List<DAL.RECIBO_PAGO> lst = DAL.RECIBO_PAGO.read(nroRecibo);
+                List<DAL.PERSONAS_GRILLA> lstPer = DAL.PERSONAS_GRILLA.getByNroCta(lstCta[0].NRO_CTA);
+                DAL.INMUEBLES objInm = DAL.INMUEBLES.getByNroCta(lstCta[0].NRO_CTA);
+                string propietarios = string.Empty;
+                string cuitper = string.Empty;
+                foreach (var item in lstPer)
+                {
+                    if (item.RESPONSABLE_FACTURACION)
+                        propietarios += string.Format("{0}, ", item.NOMBRE);
+                    cuitper = item.CUIT;
+                }
+
+                string reportPath = Server.MapPath("Recibo.rpt");
+                customerReport.PrintOptions.PaperSize = PaperSize.PaperA4;
+                customerReport.Load(reportPath);
+                List<DAL.PAGOS_X_FACTURA> lstPagos = DAL.PAGOS_X_FACTURA.read(nroRecibo);
+                customerReport.Subreports[0].SetDataSource(lstPagos);
+                customerReport.SetDataSource(lst);
+                customerReport.SetParameterValue("nroRecibo", nroRecibo);
+                customerReport.SetParameterValue("fecha",
+                    Convert.ToDateTime(Request.QueryString["fecha"]).ToShortDateString());
+                customerReport.SetParameterValue("formapago", DAL.RECIBO_PAGO.getFormaPago(nroRecibo));
+                customerReport.SetParameterValue("propietario", string.Format(
+    "{0} (Manzana: {1} - Lote: {2})", propietarios.Substring(0, propietarios.Length - 2),
+    objInm.MANZANA, objInm.LOTE));
+                customerReport.SetParameterValue("direccion", string.Format("{0} N° {1}",
+    objInm.CALLE, objInm.NRO));
+                customerReport.SetParameterValue("cuit", string.Format("{0}-{1}-{2}",
+                    cuitper.Substring(0, 2), cuitper.Substring(2, 8), cuitper.Substring(10, 1)));
+                customerReport.SetParameterValue("nrocta", lstCta[0].NRO_CTA);
+
+                StringBuilder pagos = new StringBuilder();
+                //pagos.AppendLine("<tr><td>MEDIO PAGO.........................MONTO</td></tr>");
+                //pagos.AppendLine("<tr><td>______________________________________________________________________</td></tr>");
+                //foreach (var item in lstPagos)
+                //{
+                //    pagos.AppendLine(string.Format("<tr><td>{0}..........{1}Nro.: {2}.........$ {3}</td></tr>",
+                //        item.MEDIO_PAGO, item.BANCO, item.NRO_CHEQUE, item.MONTO));
+                //}
+                //pagos.AppendLine("</tbody></table>");
+                //customerReport.SetParameterValue("mediospago", pagos.ToString());
+                crview.HyperlinkTarget = "_BLANK";
+                crview.RefreshReport();
+                crview.DataBind();
+
+                customerReport.ExportToHttpResponse(ExportFormatType.PortableDocFormat, Response, false,
+                    string.Format("Recibo Nro: {0}", nroRecibo));
+
+
+            }
+
+            catch (Exception ex)
+            {
+                System.Console.WriteLine("Error, no se pudo generar el Reporte " + ex.Message);
+                Response.Write(ex.Message);
+            }
+            finally
+            {
+                ;
+            }
+        }
+    }
+}

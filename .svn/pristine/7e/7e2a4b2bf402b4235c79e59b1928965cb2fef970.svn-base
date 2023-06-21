@@ -1,0 +1,119 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.HtmlControls;
+using System.Web.UI.WebControls;
+
+namespace LaHerradura.Back
+{
+    public partial class Factura : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                if (Request.QueryString["id"] != null)
+                {
+                    //printFactura(int.Parse(Request.QueryString["id"].ToString()));
+                    drawFactura(int.Parse(Request.QueryString["id"].ToString()));
+                }
+            }
+        }
+        private void drawFactura(int id)
+        {
+            try
+            {
+                DAL.CTACTE_EXPENSAS objFactura = DAL.CTACTE_EXPENSAS.getByPk(id);
+                List<DAL.DETALLE_DEUDA> lstDetalle = DAL.DETALLE_DEUDA.read(objFactura.PERIODO, objFactura.NRO_CTA);
+
+                DAL.EMPRESA objEmpresa = DAL.EMPRESA.getByPk(1);
+
+
+                lblTipoComp.InnerHtml = "C";
+                lblCodTipoComp.InnerHtml = "Cod: 11";
+                lblFact.InnerHtml = "ORGINAL";
+                string strCadena = Utils.Utils.ArmoCBarra(objEmpresa.CUIT, 11,
+objFactura.PTO_VTA, objFactura.CAE, objFactura.FECHA_CAE);
+                lblCodBarra.InnerHtml = strCadena;
+                lblDescCodBarra.InnerHtml = strCadena;
+
+
+                lblEmpresa.InnerHtml = objEmpresa.NOMBRE_FANTASIA;
+                lblRazonSocial.InnerHtml = string.Format("Razon Social: {0}", objEmpresa.RAZON_SOCIAL);
+                lblFechaComp.InnerHtml = string.Format("Fecha: {0}",
+                    objFactura.FECHA_CAE.ToShortDateString());
+                lblNroComp.InnerHtml = string.Format("Nro.: {0}-{1}",
+                    objFactura.PTO_VTA.ToString().PadLeft(4, Convert.ToChar("0")),
+                    objFactura.NRO_CTE.ToString().PadLeft(8, Convert.ToChar("0")));
+
+                lblCuitEmpresa.InnerHtml = string.Format("C.U.I:T.: {0}", objEmpresa.CUIT);
+                lblDirEmpresa.InnerHtml = string.Format("Domicilio: {0}", objEmpresa.DIRECCION);
+                lblIngBrutosEmpresa.InnerHtml = string.Format("Ing. Brutos: {0}", objEmpresa.ING_BRUTOS);
+                lblLocalidadEmpresa.InnerHtml = string.Format("{0} - {1}", objEmpresa.LOCALIDAD,
+                    objEmpresa.PROVINCIA);
+                lblInicioAct.InnerHtml = string.Format("Inicio de Actividades: {0}",
+                    objEmpresa.INICIO_ACTIVIDADES.ToShortDateString());
+
+                lblCondIvaCliente.InnerHtml = "Condicion IVA: Consumidor Final";
+                lblCuitCliente.InnerHtml = string.Format("C.U.I.T.: {0}", "-");
+                lblDireccionCliente.InnerHtml = "Domicilio: -";
+                lblNombreCliente.InnerHtml = "Apellido y Nombre / Razon Social: Consumidor Final";
+
+
+                gvDetalle.DataSource = lstDetalle;
+                gvDetalle.DataBind();
+
+                lstDetalle.Remove(lstDetalle.Find(d => d.ID_CONCEPTO == 1));
+                decimal tot = lstDetalle.Sum(d => d.CANT * d.COSTO);
+
+                decimal total = lstDetalle.Sum(d => d.COSTO * d.CANT);
+                decimal iva = total * 21 / 100;
+                decimal subTotal = total - iva;
+
+                DAL.LIQUIDACION_EXPENSAS objLiq = DAL.LIQUIDACION_EXPENSAS.getByPk(objFactura.PERIODO);
+                lbl1Venc.InnerHtml = objLiq.venc1_corto;
+                lblMonto1.InnerHtml = string.Format("{0:c}", objLiq.MONTO_1 + tot);
+
+                lbl2Venc.InnerHtml = objLiq.venc2_corto;
+                lblMonto2.InnerHtml = string.Format("{0:c}", objLiq.MONTO_2 + tot);
+
+                lbl3Venc.InnerHtml = objLiq.venc3_corto;
+                lblMonto3.InnerHtml = string.Format("{0:c}", objLiq.MONTO_3 + tot);
+                if (objFactura.CAE != 0)
+                {
+                    divAfip.Visible = true;
+                    lblCAE.InnerHtml = string.Format("CAE Nro.: {0}", objFactura.CAE.ToString());
+                    lblVencCAE.InnerHtml = string.Format("Fecha Venc. CAE: {0}",
+                        objFactura.FECHA_CAE.ToShortDateString());
+                }
+                else
+                {
+                    divAfip.Visible = true;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        protected void gvDetalle_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            try
+            {
+                if (e.Row.RowType == DataControlRowType.DataRow)
+                {
+                    //DAL.DETALLE_DEUDA obj = (DAL.DETALLE_DEUDA)e.Row.DataItem;
+                    //HtmlGenericControl lblSubTotal = (HtmlGenericControl)e.Row.FindControl("lblSubTotal");
+                    //lblSubTotal.InnerHtml = (obj.CANT * obj.COSTO).ToString();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

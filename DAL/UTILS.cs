@@ -1,0 +1,114 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace DAL
+{
+    public class UTILS
+    {
+        public static DateTime getFechaActual()
+        {
+            DateTime timeUtc = DateTime.UtcNow;
+            TimeZoneInfo cstZone = TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
+            DateTime FechaActual = TimeZoneInfo.ConvertTimeFromUtc(timeUtc, cstZone);
+            return FechaActual;
+        }
+        public static string getNombrePeriodo(int periodo, int nroCta)
+        {
+            string periodoMaquillado = string.Empty;
+
+            if (periodo != 20190100)
+            {
+                string me, mes = string.Empty;
+                me = periodo.ToString().Substring(4, 2);
+                switch (me)
+                {
+                    case "01":
+                        mes = "Enero";
+                        break;
+                    case "02":
+                        mes = "Febrero";
+                        break;
+                    case "03":
+                        mes = "Marzo";
+                        break;
+                    case "04":
+                        mes = "Abril";
+                        break;
+                    case "05":
+                        mes = "Mayo";
+                        break;
+                    case "06":
+                        mes = "Junio";
+                        break;
+                    case "07":
+                        mes = "Julio";
+                        break;
+                    case "08":
+                        mes = "Agosto";
+                        break;
+                    case "09":
+                        mes = "Septiembre";
+                        break;
+                    case "10":
+                        mes = "Octubre";
+                        break;
+                    case "11":
+                        mes = "Noviembre";
+                        break;
+                    case "12":
+                        mes = "Diciembre";
+                        break;
+                    default:
+                        break;
+                }
+                if (periodo.ToString().Substring(6, 2) == "00")
+                {
+                    periodoMaquillado =
+                    string.Format(
+                        "Expensas Ordinarias mes de {0} de {1}",
+                        mes,
+                        periodo.ToString().Substring(0, 4));
+
+                }
+                else
+                {
+                    if (int.Parse(periodo.ToString().Substring(6, 2)) < 10)
+                    {
+                        periodoMaquillado =
+                        string.Format(
+                            "Expensas Extraordinarias mes de {0} de {1}",
+                            mes,
+                            periodo.ToString().Substring(0, 4));
+                    }
+                    else
+                    {
+                        if (int.Parse(periodo.ToString().Substring(6, 2)) == 12)
+                        {
+                            periodoMaquillado = "Saldo a Diciembre de 2019";
+                        }
+                        else
+                        {
+                            string det = string.Empty;
+                            List<DAL.DETALLE_DEUDA> objDet =
+                                DAL.DETALLE_DEUDA.read(periodo, nroCta);
+                            if (objDet.Count > 0)
+                                det = objDet[0].OBS;
+                            periodoMaquillado = det;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                periodoMaquillado = string.Format(
+                    "Saldo (capital) a Sept. 2019",
+                    periodo);
+
+            }
+            return periodoMaquillado;
+        }
+    }
+}

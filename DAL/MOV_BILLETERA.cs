@@ -1,0 +1,219 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class MOV_BILLETERA : DALBase
+    {
+        public int ID { get; set; }
+        public int NRO_CTA { get; set; }
+        public int ID_PERSONA { get; set; }
+        public DateTime FECHA { get; set; }
+        public int NRO_RECIBO { get; set; }
+        public decimal MONTO { get; set; }
+        public int TIPO_MOVIMIENTO { get; set; }
+        public Int64 NRO_NOTA_CREDITO { get; set; }
+        public int PTO_VTA_NOTA_CREDITO { get; set; }
+
+
+        public MOV_BILLETERA()
+        {
+            ID = 0;
+            NRO_CTA = 0;
+            ID_PERSONA = 0;
+            FECHA = UTILS.getFechaActual();
+            NRO_RECIBO = 0;
+            MONTO = 0;
+            TIPO_MOVIMIENTO = 0;
+            NRO_NOTA_CREDITO = 0;
+            PTO_VTA_NOTA_CREDITO = 0;
+        }
+
+        private static List<MOV_BILLETERA> mapeo(SqlDataReader dr)
+        {
+            List<MOV_BILLETERA> lst = new List<MOV_BILLETERA>();
+            MOV_BILLETERA obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new MOV_BILLETERA();
+                    if (!dr.IsDBNull(0)) { obj.NRO_CTA = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.ID_PERSONA = dr.GetInt32(1); }
+                    if (!dr.IsDBNull(2)) { obj.FECHA = dr.GetDateTime(2); }
+                    if (!dr.IsDBNull(3)) { obj.NRO_RECIBO = dr.GetInt32(3); }
+                    if (!dr.IsDBNull(4)) { obj.MONTO = dr.GetDecimal(4); }
+                    if (!dr.IsDBNull(5)) { obj.TIPO_MOVIMIENTO = dr.GetInt32(5); }
+                    if (!dr.IsDBNull(6)) { obj.NRO_NOTA_CREDITO = dr.GetInt64(6); }
+                    if (!dr.IsDBNull(7)) { obj.PTO_VTA_NOTA_CREDITO = dr.GetInt32(7); }
+                    if (!dr.IsDBNull(8)) { obj.ID = dr.GetInt32(8); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<MOV_BILLETERA> read()
+        {
+            try
+            {
+                List<MOV_BILLETERA> lst = new List<MOV_BILLETERA>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM MOV_BILLETERA";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static MOV_BILLETERA getByCtaRecibo(int nroCta, int nroRecibo, int mov)
+        {
+            try
+            {
+                string sql = @"SELECT *FROM MOV_BILLETERA 
+                               WHERE NRO_CTA = @NRO_CTA AND NRO_RECIBO = @NRO_RECIBO AND TIPO_MOVIMIENTO = @TIPO_MOVIMIENTO";
+                MOV_BILLETERA obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql;
+                    cmd.Parameters.AddWithValue("@NRO_CTA", nroCta);
+                    cmd.Parameters.AddWithValue("@NRO_RECIBO", nroRecibo);
+                    cmd.Parameters.AddWithValue("@TIPO_MOVIMIENTO", mov);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<MOV_BILLETERA> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void insert(MOV_BILLETERA obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO MOV_BILLETERA(");
+                sql.AppendLine("NRO_CTA");
+                sql.AppendLine(", ID_PERSONA");
+                sql.AppendLine(", FECHA");
+                sql.AppendLine(", NRO_RECIBO");
+                sql.AppendLine(", MONTO");
+                sql.AppendLine(", TIPO_MOVIMIENTO");
+                sql.AppendLine(", NRO_NOTA_CREDITO");
+                sql.AppendLine(", PTO_VTA_NOTA_CREDITO");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@NRO_CTA");
+                sql.AppendLine(", @ID_PERSONA");
+                sql.AppendLine(", @FECHA");
+                sql.AppendLine(", @NRO_RECIBO");
+                sql.AppendLine(", @MONTO");
+                sql.AppendLine(", @TIPO_MOVIMIENTO");
+                sql.AppendLine(", @NRO_NOTA_CREDITO");
+                sql.AppendLine(", @PTO_VTA_NOTA_CREDITO");
+                sql.AppendLine(")");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", obj.NRO_CTA);
+                    cmd.Parameters.AddWithValue("@ID_PERSONA", obj.ID_PERSONA);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@NRO_RECIBO", obj.NRO_RECIBO);
+                    cmd.Parameters.AddWithValue("@MONTO", obj.MONTO);
+                    cmd.Parameters.AddWithValue("@TIPO_MOVIMIENTO", obj.TIPO_MOVIMIENTO);
+                    cmd.Parameters.AddWithValue("@NRO_NOTA_CREDITO", obj.NRO_NOTA_CREDITO);
+                    cmd.Parameters.AddWithValue("@PTO_VTA_NOTA_CREDITO", obj.PTO_VTA_NOTA_CREDITO);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(MOV_BILLETERA obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  MOV_BILLETERA SET");
+                sql.AppendLine("NRO_CTA=@NRO_CTA");
+                sql.AppendLine(", ID_PERSONA=@ID_PERSONA");
+                sql.AppendLine(", FECHA=@FECHA");
+                sql.AppendLine(", NRO_RECIBO=@NRO_RECIBO");
+                sql.AppendLine(", MONTO=@MONTO");
+                sql.AppendLine(", TIPO_MOVIMIENTO=@TIPO_MOVIMIENTO");
+                sql.AppendLine("WHERE");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", obj.NRO_CTA);
+                    cmd.Parameters.AddWithValue("@ID_PERSONA", obj.ID_PERSONA);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@NRO_RECIBO", obj.NRO_RECIBO);
+                    cmd.Parameters.AddWithValue("@MONTO", obj.MONTO);
+                    cmd.Parameters.AddWithValue("@TIPO_MOVIMIENTO", obj.TIPO_MOVIMIENTO);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(int id)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE MOV_BILLETERA ");
+                sql.AppendLine("WHERE ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+

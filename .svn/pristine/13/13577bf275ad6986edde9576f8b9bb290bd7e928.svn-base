@@ -1,0 +1,791 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.HtmlControls;
+using System.Web.UI.WebControls;
+
+namespace LaHerradura.Proveedores
+{
+    public partial class PagoProveedores : System.Web.UI.Page
+    {
+        protected void removeValorBilletera()
+        {
+            int index = 0;
+            List<DAL.PAGOS_X_FACTURA> lst = leerGrilla();
+            DAL.PAGOS_X_FACTURA obj = lst[index];
+            lst.RemoveAt(index);
+            fillGrilla(lst);
+            lbtnAddValor.Visible = true;
+
+            btnAcentarPago.Visible = false;
+
+            txtMontoVal.Text = (Convert.ToDecimal(lblDeudaPagar.Text) - acumulado()).ToString();
+
+            spanSaldo.InnerHtml = acumulado().ToString();
+            txtMontoVal.Focus();
+            DDLMedioPago.SelectedIndex = 0;
+            DDLMedioPago_SelectedIndexChanged(null, null);
+
+            decimal montoFacturado = Convert.ToDecimal(lblDeudaPagar.Text);
+
+            decimal montoValor = Convert.ToDecimal(txtMontoVal.Text);
+
+            if (acumulado() + montoValor > montoFacturado)
+            {
+                txtMontoVal.Focus();
+                divBilletera.Visible = true;
+                //return;
+            }
+            else
+            {
+                txtMontoVal.Focus();
+                divBilletera.Visible = false;
+            }
+
+            decimal diferencia = 0;
+            if (acumulado() > montoFacturado)
+            {
+                diferencia = acumulado() - montoFacturado;
+            }
+            spanAcreditar.InnerHtml = montoFacturado.ToString();
+            spanBilletera.InnerHtml = diferencia.ToString();
+            if (obj.ID_PLAN_PAGO == 7)
+            {
+                chkSelect.Checked = false;
+                txtMontoBilleteraEditable.Text = hMontoOriginalBilletera.Value;
+            }
+        }
+        protected void addValorBilletera()
+        {
+            try
+            {
+                divError.Visible = false;
+                divBilletera.Visible = false;
+                //TOTAL DE LA FACTURA
+                decimal montoFacturado = Convert.ToDecimal(lblDeudaPagar.Text);
+                //MONTO A PAGAR CON EL MEDIO DE PAGO
+                decimal montoValor = Convert.ToDecimal(
+                    txtMontoBilleteraEditable.Text);
+
+                decimal saldo = 0;
+                decimal acumulado_ = 0;
+                if (montoValor == 0)
+                    return;
+                if (montoValor > montoFacturado)
+                {
+
+                    txtMontoVal.Focus();
+                    divBilletera.Visible = true;
+                    //return;
+                }
+                if (acumulado() + montoValor > montoFacturado)
+                {
+                    txtMontoVal.Focus();
+                    divBilletera.Visible = true;
+                    //return;
+                }
+                List<DAL.PAGOS_X_FACTURA> lst = leerGrilla();
+                DAL.PAGOS_X_FACTURA obj = new DAL.PAGOS_X_FACTURA();
+
+                obj.ID_PLAN_PAGO = 7;
+                obj.MEDIO_PAGO = "BILLETERA";
+                obj.MONTO = montoValor;
+                if (DDLMedioPago.SelectedIndex == 0)
+                {
+                    DAL.PAGOS_X_FACTURA control = lst.Find(o => o.MEDIO_PAGO == obj.MEDIO_PAGO);
+                    if (control == null)
+                        lst.Insert(0, obj);
+                    else
+                        lst.Find(o => o.MEDIO_PAGO == obj.MEDIO_PAGO).MONTO += obj.MONTO;
+                }
+                else
+                    lst.Insert(0, obj);
+                fillGrilla(lst);
+                DDLMedioPago.SelectedIndex = 0;
+                acumulado_ = acumulado();
+                saldo = montoFacturado - acumulado_;
+
+                if (saldo >= 0)
+                {
+                    txtMontoVal.Text = saldo.ToString();
+                    spanSaldo.InnerText = acumulado_.ToString();
+                }
+                else
+                {
+                    txtMontoVal.Text = 0.ToString();
+                    spanSaldo.InnerText = acumulado_.ToString();
+                }
+
+
+                decimal diferencia = 0;
+                if (acumulado() > montoFacturado)
+                {
+                    diferencia = acumulado() - montoFacturado;
+                }
+                spanAcreditar.InnerHtml = montoFacturado.ToString();
+                spanBilletera.InnerHtml = diferencia.ToString();
+
+
+                txtMontoVal.Focus();
+                if (saldo <= 0)
+                {
+                    btnAcentarPago.Visible = true;
+                    hPagoCuenta.Value = 0.ToString();
+                }
+                else
+                {
+                    hPagoCuenta.Value = 1.ToString();
+                    btnAcentarPago.Visible = true;
+                    //btnAcentarPago.Visible = false;
+                }
+                DDLMedioPago.SelectedIndex = 0;
+                DDLMedioPago_SelectedIndexChanged(null, null);
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                divErrorBilletera.Visible = false;
+                divError.Visible = false;
+                if (!IsPostBack)
+                {
+                    if (Session["CTAS"] != null)
+                    {
+                        hUsuario.Value = Request.Cookies["UserLh"]["Id"];
+                        List<DAL.CTACTE_EXPENSAS> lst = (List<DAL.CTACTE_EXPENSAS>)Session["CTAS"];
+                        gvCtaCte.DataSource = lst.OrderBy(l => l.PERIODO).ToList(); ;
+                        gvCtaCte.DataBind();
+
+                        DDLMedioPago.DataTextField = "DESCRIPCION";
+                        DDLMedioPago.DataValueField = "ID";
+
+                        DDLMedioPago.DataSource = DAL.MEDIOS_PAGO.readManual();
+                        DDLMedioPago.DataBind();
+                        fillDeuda(lst);
+
+                        DAL.BILLETERA objBilletera = DAL.BILLETERA.getByPk(lst[0].NRO_CTA);
+                        if (objBilletera.SALDO == 0)
+                        {
+                            divSaldoBilletera.Visible = false;
+                        }
+                        else
+                        {
+                            divSaldoBilletera.Visible = true;
+                            if (Convert.ToDecimal(lblDeudaPagar.Text) > objBilletera.SALDO)
+                            {
+                                txtMontoBilleteraEditable.Text = objBilletera.SALDO.ToString();
+                                hMontoOriginalBilletera.Value = objBilletera.SALDO.ToString();
+                            }
+                            else
+                            {
+                                txtMontoBilleteraEditable.Text = lblDeudaPagar.Text;
+                                hMontoOriginalBilletera.Value = lblDeudaPagar.Text;
+                            }
+                            addValorBilletera();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+
+        private void fillDeuda(List<DAL.CTACTE_EXPENSAS> lst)
+        {
+            try
+            {
+                DateTime fec = LaHerradura.Utils.Utils.getFechaActual();
+                lblMensaje.Text = string.Empty;
+                decimal deuda = 0;
+                decimal deudaOriginal = 0;
+                decimal intereses = 0;
+                decimal descPagoTermino = 0;
+                decimal pagoACta = 0;
+                int select = 0;
+                List<DAL.CTACTE_EXPENSAS> lst2 = new List<DAL.CTACTE_EXPENSAS>();
+                DAL.CTACTE_EXPENSAS obj;
+                for (int i = 0; i < lst.Count; i++)
+                {
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(lst[i].ID);
+                    intereses += obj.INTERES_MORA;
+                    if (obj.PAGO_A_CTA > 0)
+                    {
+                        deudaOriginal += obj.SALDO_CAPITAL;
+                    }
+                    else
+                    {
+                        deudaOriginal += obj.MONTO_ORIGINAL;
+                    }
+                    descPagoTermino += obj.DESC_VENCIMIENTO;
+                    pagoACta += obj.PAGO_A_CTA;
+                    lst2.Add(obj);
+
+                }
+                deuda = deudaOriginal - descPagoTermino + intereses;
+                txtFechaCobro.Text = string.Format("{0}-{1}-{2}",
+                    fec.Year,
+                    fec.Month.ToString().PadLeft(2, Convert.ToChar("0")),
+                    fec.Day.ToString().PadLeft(2, Convert.ToChar("0")));
+
+                txtMontoVal.Text = deuda.ToString();
+                lblDeudaPagar.Text = deuda.ToString();
+                lblCantSelecionados.Text = select.ToString();
+                lblDesc.Text = descPagoTermino.ToString();
+                lblInteresMora.Text = intereses.ToString();
+                lblMontoOriginal.Text = deudaOriginal.ToString();
+                gvConfirmoPago.DataSource = lst2.OrderBy(l => l.PERIODO).ToList();
+                gvConfirmoPago.DataBind();
+                txtTotDetalle.InnerHtml = deuda.ToString();
+                //lblDeudaOriginal.Text = deudaOriginal.ToString();
+                //lblIntereses.Text = intereses.ToString();
+                if (lst2.Count == 0)
+                    divAsiento.Visible = false;
+                else
+                    divAsiento.Visible = true;
+
+                DDLBanco.DataValueField = "CODIGO";
+                DDLBanco.DataTextField = "DENOMINACION";
+                DDLBanco.DataSource = DAL.BANCOS.read();
+                DDLBanco.DataBind();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        protected void gvDetails_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            try
+            {
+                if (e.Row.RowType == DataControlRowType.DataRow)
+                {
+                    DAL.CTACTE_EXPENSAS obj = (DAL.CTACTE_EXPENSAS)e.Row.DataItem;
+                    Label lblPeriodo = (Label)e.Row.FindControl("lblPeriodo");
+
+                    lblPeriodo.Text = string.Format("{0}-{1}/{2}",
+                        obj.PERIODO.ToString().Substring(0, 4),
+                        obj.PERIODO.ToString().Substring(4, 2),
+                        obj.PERIODO.ToString().Substring(6, 2));
+
+
+                    HtmlGenericControl lblInteresMora = (HtmlGenericControl)
+    e.Row.FindControl("lblInteresMora");
+                    if (obj.INTERES_MORA != 0)
+                    {
+                        lblInteresMora.Visible = true;
+                        if (obj.PAGO_A_CTA == 0)
+                        {
+                            lblInteresMora.InnerHtml =
+                                string.Format(
+       "<span>{0:c}</span><a href=\"#\" class=\"pull-right\" onclick=\"abreDetalleInteres('{1}')\"><span class=\"fa fa-edit\"></span></a>",
+                                obj.INTERES_MORA, obj.ID);
+                        }
+                        else
+                        {
+                            lblInteresMora.InnerHtml =
+                            string.Format(
+   "<span>{0:c}</span><a href=\"#\" class=\"pull-right\" onclick=\"abreDetalleInteres('{1}')\"><span class=\"fa fa-edit\"></span></a>",
+                            obj.INTERES_MORA, obj.ID);
+                        }
+                        //List<DAL.DETALLE_INTERES> lstDetInteres = DAL.DETALLE_INTERES.read(
+                        //    obj.VENCIMIENTO, , obj.SALDO);
+                        //gvDetalleInteres.DataSource = lstDetInteres;
+                        //gvDetalleInteres.DataBind();
+                    }
+
+                    HtmlGenericControl divDescuento = (HtmlGenericControl)
+e.Row.FindControl("divDescuento");
+                    divDescuento.InnerHtml =
+                                string.Format(
+       "<a href=\"#\" class=\"pull-right\" onclick=\"abreDescuento('{0}','{1}')\"><span class=\"fa fa-dollar\" style=\"color: green;\"></span></a>",
+                                obj.ID, obj.MONTO_ORIGINAL);
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+
+        }
+
+        protected void gvDetails_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+
+        }
+
+        protected void btnCancela_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                List<DAL.CTACTE_EXPENSAS> lst = new List<DAL.CTACTE_EXPENSAS>();
+                DAL.CTACTE_EXPENSAS obj;
+                for (int i = 0; i < gvCtaCte.Rows.Count; i++)
+                {
+                    GridViewRow row = gvCtaCte.Rows[i];
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(int.Parse(row.Cells[0].Text));
+                    obj.FECHA = LaHerradura.Utils.Utils.getFechaActual();
+
+                    DAL.CTACTE_EXPENSAS.recalculo(obj.FECHA, obj.PERIODO, obj.NRO_CTA, obj.ID);
+
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(int.Parse(row.Cells[0].Text));
+                    lst.Add(obj);
+                }
+                gvCtaCte.DataSource = lst;
+                gvCtaCte.DataBind();
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        protected void btnAsientaPago_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                List<DAL.CTACTE_EXPENSAS> lst = new List<DAL.CTACTE_EXPENSAS>();
+                DAL.CTACTE_EXPENSAS obj;
+                List<DAL.PAGOS_X_FACTURA> lstPagos = leerGrilla();
+                decimal TotalPagado = lstPagos.Sum(p => p.MONTO);
+
+                for (int i = 0; i < gvConfirmoPago.Rows.Count; i++)
+                {
+                    GridViewRow row = gvConfirmoPago.Rows[i];
+                    int id = int.Parse(row.Cells[0].Text);
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(id);
+                    obj.ID_MEDIO_PAGO = lstPagos[0].ID_PLAN_PAGO;
+                    obj.FECHA = Convert.ToDateTime(txtFechaCobro.Text);
+                    obj.ID_USUARIO_PAGA = int.Parse(hUsuario.Value);
+                    if (obj.SALDO - obj.DESC_VENCIMIENTO <= TotalPagado)
+                    {
+                        TotalPagado = TotalPagado - obj.SALDO - obj.DESC_VENCIMIENTO;
+                        obj.PAGO_TOTAL = true;
+                        obj.MONTO_PAGADO = obj.SALDO - obj.DESC_VENCIMIENTO;
+                        lst.Add(obj);
+                    }
+                    else
+                    {
+                        obj.PAGO_TOTAL = false;
+                        obj.MONTO_PAGADO = TotalPagado;
+                        lst.Add(obj);
+                        break;
+                    }
+                }
+                lst = lst.OrderBy(p => p.PERIODO).ToList();
+                decimal totalPago1 = lstPagos.Sum(s => s.MONTO);
+                decimal totalPago2 = lst.Sum(c => c.MONTO_PAGADO);
+                decimal control = totalPago1 - totalPago2;
+                CTA_CTE.asientaPago(lst,
+                    lstPagos, Convert.ToDateTime(txtFechaCobro.Text), string.Empty);
+                Response.Redirect(string.Format("inmueble.aspx?nrocta={0}", Request.QueryString["nrocta"]));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        private List<DAL.PAGOS_X_FACTURA> leerGrilla()
+        {
+            decimal tot = 0;
+            List<DAL.PAGOS_X_FACTURA> lst = new List<DAL.PAGOS_X_FACTURA>();
+            for (int i = 0; i < gvValores.Rows.Count; i++)
+            {
+                GridViewRow row = gvValores.Rows[i];
+                DAL.PAGOS_X_FACTURA obj = new DAL.PAGOS_X_FACTURA();
+                obj.MEDIO_PAGO = gvValores.DataKeys[i].Values["MEDIO_PAGO"].ToString();
+                obj.ID_PLAN_PAGO = Convert.ToInt32(gvValores.DataKeys[i].Values["ID_PLAN_PAGO"].ToString());
+                if (gvValores.DataKeys[i].Values["BANCO"] != null)
+                {
+                    obj.BANCO = gvValores.DataKeys[i].Values["BANCO"].ToString();
+                    obj.ID_BANCO = Convert.ToInt32(gvValores.DataKeys[i].Values["ID_BANCO"].ToString());
+                    obj.NRO_CHEQUE = gvValores.DataKeys[i].Values["NRO_CHEQUE"].ToString();
+                    obj.CUIT_PAGADOR = gvValores.DataKeys[i].Values["CUIT_PAGADOR"].ToString();
+                    obj.FECHA_CHEQUE = Convert.ToDateTime(
+                        gvValores.DataKeys[i].Values["FECHA_CHEQUE"]);
+                }
+                obj.MONTO = Convert.ToDecimal(gvValores.DataKeys[i].Values["MONTO"]);
+                lst.Add(obj);
+            }
+            //txtTot.Text = tot.ToString();
+            return lst;
+        }
+
+        protected void btnRecalculo_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                List<DAL.CTACTE_EXPENSAS> lst = new List<DAL.CTACTE_EXPENSAS>();
+                DAL.CTACTE_EXPENSAS obj;
+                for (int i = 0; i < gvCtaCte.Rows.Count; i++)
+                {
+                    GridViewRow row = gvCtaCte.Rows[i];
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(int.Parse(row.Cells[0].Text));
+                    DateTime fecha = Convert.ToDateTime(txtFechaCobro.Text);
+
+                    if (obj.TIPO_MOVIMIENTO == 1)
+                        DAL.CTACTE_EXPENSAS.recalculo(fecha, obj.PERIODO, obj.NRO_CTA, obj.ID);
+                    if (obj.TIPO_MOVIMIENTO == 3)
+                        DAL.CTACTE_EXPENSAS.recalculoPlan(fecha, obj.PERIODO, obj.NRO_CTA, obj.ID, obj.NRO_PLAN_PAGO);
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(int.Parse(row.Cells[0].Text));
+                    lst.Add(obj);
+                }
+                gvCtaCte.DataSource = lst;
+                gvCtaCte.DataBind();
+
+                fillDeuda(lst);
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        protected void DDLMediosPAgo_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (DDLMedioPago.SelectedIndex == 1)
+                    divCheque.Visible = true;
+                else
+                    divCheque.Visible = false;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        private decimal acumulado()
+        {
+            try
+            {
+                return leerGrilla().Sum(p => p.MONTO);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        protected void lbtnAddValor_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                divError.Visible = false;
+                divBilletera.Visible = false;
+                //TOTAL DE LA FACTURA
+                decimal montoFacturado = Convert.ToDecimal(lblDeudaPagar.Text);
+                //MONTO A PAGAR CON EL MEDIO DE PAGO
+                decimal montoValor = Convert.ToDecimal(txtMontoVal.Text);
+
+                decimal saldo = 0;
+                decimal acumulado_ = 0;
+                if (montoValor == 0)
+                    return;
+                if (montoValor > montoFacturado)
+                {
+
+                    txtMontoVal.Focus();
+                    divBilletera.Visible = true;
+                    //return;
+                }
+                if (acumulado() + montoValor > montoFacturado)
+                {
+                    txtMontoVal.Focus();
+                    divBilletera.Visible = true;
+                    //return;
+                }
+                List<DAL.PAGOS_X_FACTURA> lst = leerGrilla();
+                DAL.PAGOS_X_FACTURA obj = new DAL.PAGOS_X_FACTURA();
+                if (divCheque.Visible)
+                {
+                    obj.ID_BANCO = int.Parse(DDLBanco.SelectedItem.Value);
+                    obj.NRO_CHEQUE = txtNroCheque.Text;
+                    obj.BANCO = DDLBanco.SelectedItem.Text;
+                    obj.CUIT_PAGADOR = txtCuitPagador.Text;
+                    obj.FECHA_CHEQUE = Convert.ToDateTime(txtFechaCheque.Text);
+                }
+                obj.ID_PLAN_PAGO = Convert.ToInt32(DDLMedioPago.SelectedItem.Value);
+                obj.MEDIO_PAGO = DDLMedioPago.SelectedItem.Text;
+                obj.MONTO = montoValor;
+                if (DDLMedioPago.SelectedIndex == 0)
+                {
+                    DAL.PAGOS_X_FACTURA control = lst.Find(o => o.MEDIO_PAGO == obj.MEDIO_PAGO);
+                    if (control == null)
+                        lst.Add(obj);
+                    else
+                        lst.Find(o => o.MEDIO_PAGO == obj.MEDIO_PAGO).MONTO += obj.MONTO;
+                }
+                else
+                    lst.Add(obj);
+                fillGrilla(lst);
+                DDLMedioPago.SelectedIndex = 0;
+                acumulado_ = acumulado();
+                saldo = montoFacturado - acumulado_;
+
+                if (saldo >= 0)
+                {
+                    txtMontoVal.Text = saldo.ToString();
+                    spanSaldo.InnerText = acumulado_.ToString();
+                }
+                else
+                {
+                    txtMontoVal.Text = 0.ToString();
+                    spanSaldo.InnerText = acumulado_.ToString();
+                }
+
+
+                decimal diferencia = 0;
+                if (acumulado() > montoFacturado)
+                {
+                    diferencia = acumulado() - montoFacturado;
+                }
+                spanAcreditar.InnerHtml = montoFacturado.ToString();
+                spanBilletera.InnerHtml = diferencia.ToString();
+
+
+                txtMontoVal.Focus();
+                if (saldo <= 0)
+                {
+                    btnAcentarPago.Visible = true;
+                    hPagoCuenta.Value = 0.ToString();
+                }
+                else
+                {
+                    hPagoCuenta.Value = 1.ToString();
+                    btnAcentarPago.Visible = true;
+                    //btnAcentarPago.Visible = false;
+                }
+                DDLMedioPago.SelectedIndex = 0;
+                DDLMedioPago_SelectedIndexChanged(null, null);
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        private void fillGrilla(List<DAL.PAGOS_X_FACTURA> lst)
+        {
+            gvValores.DataSource = lst;
+            gvValores.DataBind();
+        }
+
+        protected void gvValores_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "eliminar")
+            {
+                int index = Convert.ToInt32(e.CommandArgument);
+                List<DAL.PAGOS_X_FACTURA> lst = leerGrilla();
+                DAL.PAGOS_X_FACTURA obj = lst[index];
+                lst.RemoveAt(index);
+                fillGrilla(lst);
+                lbtnAddValor.Visible = true;
+
+                btnAcentarPago.Visible = false;
+
+                txtMontoVal.Text = (Convert.ToDecimal(lblDeudaPagar.Text) - acumulado()).ToString();
+
+                spanSaldo.InnerHtml = acumulado().ToString();
+                txtMontoVal.Focus();
+                DDLMedioPago.SelectedIndex = 0;
+                DDLMedioPago_SelectedIndexChanged(null, null);
+
+                decimal montoFacturado = Convert.ToDecimal(lblDeudaPagar.Text);
+
+                decimal montoValor = Convert.ToDecimal(txtMontoVal.Text);
+
+                if (acumulado() + montoValor > montoFacturado)
+                {
+                    txtMontoVal.Focus();
+                    divBilletera.Visible = true;
+                    //return;
+                }
+                else
+                {
+                    txtMontoVal.Focus();
+                    divBilletera.Visible = false;
+                }
+
+                decimal diferencia = 0;
+                if (acumulado() > montoFacturado)
+                {
+                    diferencia = acumulado() - montoFacturado;
+                }
+                spanAcreditar.InnerHtml = montoFacturado.ToString();
+                spanBilletera.InnerHtml = diferencia.ToString();
+                if (obj.ID_PLAN_PAGO == 7)
+                {
+                    chkSelect.Checked = false;
+                    txtMontoBilleteraEditable.Text = hMontoOriginalBilletera.Value;
+                }
+            }
+        }
+
+        protected void DDLMedioPago_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (DDLMedioPago.SelectedIndex == 1)
+                    divCheque.Visible = true;
+                else
+                    divCheque.Visible = false;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        protected void btnSalir_ServerClick(object sender, EventArgs e)
+        {
+            try
+            {
+                List<DAL.CTACTE_EXPENSAS> lst = (List<DAL.CTACTE_EXPENSAS>)Session["CTAS"];
+                Response.Redirect(string.Format(
+                    "inmueble.aspx?nrocta={0}", lst[0].NRO_CTA));
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        protected void btnAceptar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DAL.CTACTE_EXPENSAS obj = DAL.CTACTE_EXPENSAS.getByPk(
+                    int.Parse(hIdCta.Value));
+                DAL.CTACTE_EXPENSAS.ajusteInteres(int.Parse(hIdCta.Value),
+                    Convert.ToDecimal(txtAjusteInteres.Text),
+                    obj.INTERES_MORA, txtObs.Text);
+
+                List<DAL.CTACTE_EXPENSAS> lst = new List<DAL.CTACTE_EXPENSAS>();
+
+                for (int i = 0; i < gvCtaCte.Rows.Count; i++)
+                {
+                    GridViewRow row = gvCtaCte.Rows[i];
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(int.Parse(row.Cells[0].Text));
+                    DateTime fecha = Convert.ToDateTime(txtFechaCobro.Text);
+
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(int.Parse(row.Cells[0].Text));
+                    lst.Add(obj);
+                }
+                gvCtaCte.DataSource = lst;
+                gvCtaCte.DataBind();
+
+                fillDeuda(lst);
+                txtObs.Text = string.Empty;
+                txtAjusteInteres.Text = string.Empty;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        protected void chkSelect_CheckedChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                if (chkSelect.Checked)
+                {
+                    addValorBilletera();
+                    txtMontoBilleteraEditable.Enabled = true;
+                }
+                else
+                {
+                    removeValorBilletera();
+                    txtMontoBilleteraEditable.Enabled = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                txtError.InnerHtml = ex.Message;
+                divError.Visible = true;
+            }
+        }
+
+        protected void txtMontoBilleteraEditable_TextChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                decimal monto = Convert.ToDecimal(txtMontoBilleteraEditable.Text);
+                decimal maximo = Convert.ToDecimal(hMontoOriginalBilletera.Value);
+                if (monto > maximo)
+                {
+                    divErrorBilletera.Visible = true;
+                    lblMsgErrorBilletera.InnerHtml = string.Format("El monto ingresado es mayor al monto disponible para utilizar ({0:c})",
+                        hMontoOriginalBilletera.Value);
+                    txtMontoBilleteraEditable.Text = maximo.ToString();
+                }
+                else
+                {
+                    removeValorBilletera();
+                    txtMontoBilleteraEditable.Text = monto.ToString();
+                    addValorBilletera();
+                    chkSelect.Enabled = true;
+                    txtMontoBilleteraEditable.Enabled = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                txtError.InnerHtml = ex.Message;
+                divError.Visible = true;
+            }
+        }
+
+        protected void btnAceptarDescuento_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                decimal descuento = Convert.ToDecimal(txtAplicaDescuento.Text);
+                DAL.CTACTE_EXPENSAS obj =
+                    DAL.CTACTE_EXPENSAS.getByPk(int.Parse(hIdCta.Value));
+                obj.DESC_VENCIMIENTO = descuento;
+                obj.DEBE = obj.MONTO_ORIGINAL;
+                obj.SALDO = obj.MONTO_ORIGINAL;
+                obj.SALDO_CAPITAL = obj.MONTO_ORIGINAL;
+                obj.SALDO_INTERES = 0;
+                obj.OBS = txtObservaciones.Text;
+                obj.INTERES_MORA = 0;
+                DAL.CTACTE_EXPENSAS.setDescuento(obj);
+                List<DAL.CTACTE_EXPENSAS> lst = new List<DAL.CTACTE_EXPENSAS>();
+
+                for (int i = 0; i < gvCtaCte.Rows.Count; i++)
+                {
+                    GridViewRow row = gvCtaCte.Rows[i];
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(int.Parse(row.Cells[0].Text));
+                    DateTime fecha = Convert.ToDateTime(txtFechaCobro.Text);
+
+                    obj = DAL.CTACTE_EXPENSAS.getByPk(int.Parse(row.Cells[0].Text));
+                    lst.Add(obj);
+                }
+                gvCtaCte.DataSource = lst;
+                gvCtaCte.DataBind();
+
+                fillDeuda(lst);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

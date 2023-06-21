@@ -1,0 +1,371 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace DAL.Carnets
+{
+    public class TURNOS:DALBase
+    {
+        public int id { get; set; }
+        public DateTime fecha { get; set; }
+        public TimeSpan hora { get; set; }
+        public int duracion { get; set; }
+        public int nro_cta { get; set; }
+        public DateTime fecha_solicitud { get; set; }
+        public bool web { get; set; }
+        public int estado { get; set; }
+        public string titulo { get; set; }
+        public int usuario_otorga { get; set; }
+        public int usuario_confirma { get; set; }
+        public int id_servicio { get; set; }
+        public enum est
+        {
+            asignado,
+            confirmado,
+            cancelado,
+            abandonado,
+            bloqueado
+        }
+
+        public TURNOS()
+        {
+            id = 0;
+            fecha = DateTime.Now;
+            hora = new TimeSpan();
+            duracion = 0;
+            nro_cta = 0;
+            fecha_solicitud = DateTime.Now;
+            web = false;
+            estado = 0;
+            titulo = string.Empty;
+            usuario_confirma = 0;
+            usuario_otorga = 0;
+            id_servicio = 0;
+        }
+        private static List<TURNOS> mapeo(SqlDataReader dr)
+        {
+            List<TURNOS> lst = new List<TURNOS>();
+            TURNOS obj;
+            if (dr.HasRows)
+            {
+                int id = dr.GetOrdinal("id");
+                int fecha = dr.GetOrdinal("fecha");
+                int hora = dr.GetOrdinal("hora");
+                int duracion = dr.GetOrdinal("duracion");
+                int nro_cta = dr.GetOrdinal("nro_cta");
+                int fecha_solicitud = dr.GetOrdinal("fecha_solicitud");
+                int web = dr.GetOrdinal("web");
+                int estado = dr.GetOrdinal("estado");
+                int titulo = dr.GetOrdinal("titulo");
+                int usuario_confirma = dr.GetOrdinal("usuario_confirma");
+                int usuario_otorga = dr.GetOrdinal("usuario_otorga");
+                int id_servicio = dr.GetOrdinal("id_servicio");
+                
+                while (dr.Read())
+                {
+                    obj = new TURNOS();
+                    if (!dr.IsDBNull(id)) { obj.id = dr.GetInt32(id); }
+                    if (!dr.IsDBNull(fecha)) { obj.fecha = dr.GetDateTime(fecha); }
+                    if (!dr.IsDBNull(hora)) { obj.hora = dr.GetTimeSpan(hora); }
+                    if (!dr.IsDBNull(duracion)) { obj.duracion = dr.GetInt32(duracion); }
+                    if (!dr.IsDBNull(nro_cta)) { obj.nro_cta = dr.GetInt32(nro_cta); }
+                    if (!dr.IsDBNull(fecha_solicitud)) { obj.fecha_solicitud = dr.GetDateTime(fecha_solicitud); }
+                    if (!dr.IsDBNull(web)) { obj.web = dr.GetBoolean(web); }
+                    if (!dr.IsDBNull(estado)) { obj.estado = dr.GetInt32(estado); }
+                    if (!dr.IsDBNull(titulo)) { obj.titulo = dr.GetString(titulo); }
+                    if (!dr.IsDBNull(usuario_confirma)) { obj.usuario_confirma = dr.GetInt32(usuario_confirma); }
+                    if (!dr.IsDBNull(usuario_otorga)) { obj.usuario_otorga = dr.GetInt32(usuario_otorga); }
+                    if (!dr.IsDBNull(id_servicio)) { obj.id_servicio = dr.GetInt32(id_servicio); }
+
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<TURNOS> read(int id_servicio)
+        {
+            try
+            {
+                List<TURNOS> lst = new List<TURNOS>();
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM TURNOS WHERE id_servicio=@id_servicio";
+                    cmd.Parameters.AddWithValue("@id_servicio", id_servicio);
+
+                    cmd.Connection.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    lst = mapeo(dr);
+                }
+                return lst;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static TURNOS getByPk(int pk)
+        {
+            try
+            {
+                TURNOS obj = null;
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM TURNOS WHERE id = @id";
+                    cmd.Parameters.AddWithValue("@id", pk);
+
+                    cmd.Connection.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<TURNOS> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<TURNOS> getByFecha(DateTime _fecha, int id_servicio)
+        {
+            try
+            {
+                List<TURNOS> lst = new List<TURNOS>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM TURNOS WHERE fecha = @fecha AND estado <> 2 AND id_servicio=@id_servicio";
+                    cmd.Parameters.AddWithValue("@fecha", _fecha);
+                    cmd.Parameters.AddWithValue("@id_servicio", id_servicio);
+                    cmd.Connection.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    lst = mapeo(dr);
+                }
+                return lst;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<TURNOS> getByCuit(string _cuit, int id_servicio)
+        {
+            try
+            {
+                List<TURNOS> lst = new List<TURNOS>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM TURNOS WHERE cuit = @cuit AND ESTADO = 0 AND FECHA >= GETDATE() AND id_servicio=@id_servicio";
+                    cmd.Parameters.AddWithValue("@cuit", _cuit);
+                    cmd.Parameters.AddWithValue("@id_servicio", id_servicio);
+                    cmd.Connection.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    lst = mapeo(dr);
+                }
+                return lst;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<TURNOS> getAllByCuit(string _cuit, int id_servicio)
+        {
+            try
+            {
+                List<TURNOS> lst = new List<TURNOS>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM TURNOS WHERE cuit = @cuit AND id_servicio=@id_servicio";
+                    cmd.Parameters.AddWithValue("@cuit", _cuit);
+                    cmd.Parameters.AddWithValue("@id_servicio", id_servicio);
+                    cmd.Connection.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    lst = mapeo(dr);
+                }
+                return lst;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<TURNOS> getByFechaHora(DateTime _fecha, TimeSpan _hora, int id_servicio)
+        {
+            try
+            {
+                TURNOS obj = null;
+                List<TURNOS> lst = new List<TURNOS>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT *FROM TURNOS WHERE fecha = @fecha AND hora = @hora AND estado <> 2 AND id_servicio=@id_servicio";
+                    cmd.Parameters.AddWithValue("@fecha", _fecha);
+                    cmd.Parameters.AddWithValue("@hora", _hora);
+                    cmd.Parameters.AddWithValue("@id_servicio", id_servicio);
+
+                    cmd.Connection.Open();
+
+                    SqlDataReader dr = cmd.ExecuteReader();
+
+                    lst = mapeo(dr);
+                }
+                return lst;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int insert(TURNOS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO TURNOS");
+                sql.AppendLine("(fecha,hora,duracion,nro_cta,fecha_solicitud,web,estado,titulo,usuario_otorga,id_servicio)");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(@fecha,@hora,@duracion,@nro_cta,GETDATE(),@web,0,@titulo,@usuario_otorga,@id_servicio);");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@fecha", obj.fecha);
+                    cmd.Parameters.AddWithValue("@hora", obj.hora);
+                    cmd.Parameters.AddWithValue("@duracion", obj.duracion);
+                    cmd.Parameters.AddWithValue("@nro_cta", obj.nro_cta);
+                    cmd.Parameters.AddWithValue("@id_servicio", obj.id_servicio);
+                    cmd.Parameters.AddWithValue("@web", obj.web);
+                    cmd.Parameters.AddWithValue("@titulo", obj.titulo);
+                    cmd.Parameters.AddWithValue("@usuario_otorga", obj.usuario_otorga);
+                    cmd.Connection.Open();
+
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void update(TURNOS obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE TURNOS");
+                sql.AppendLine("SET fecha=@fecha,hora=@hora,duracion=@duracion,");
+                sql.AppendLine("cuit=@cuit,fecha_solicitud=@fecha_solicitud,");
+                sql.AppendLine("web=@web,estado=@estado,titulo=@titulo");
+                sql.AppendLine("WHERE id=@id");
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@fecha", obj.fecha);
+                    cmd.Parameters.AddWithValue("@hora", obj.hora);
+                    cmd.Parameters.AddWithValue("@duracion", obj.duracion);
+                    cmd.Parameters.AddWithValue("@nro_cta", obj.nro_cta);
+                    cmd.Parameters.AddWithValue("@web", obj.web);
+                    cmd.Parameters.AddWithValue("@id", obj.id);
+                    cmd.Parameters.AddWithValue("@estado", obj.estado);
+                    cmd.Parameters.AddWithValue("@titulo", obj.titulo);
+                    cmd.Connection.Open();
+
+                    cmd.ExecuteNonQuery();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void updateEstado(int id, est estado, int usuario_confirma)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE TURNOS");
+                sql.AppendLine("SET estado=@estado, usuario_confirma=@usuario_confirma");
+                sql.AppendLine("WHERE id=@id");
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@estado", estado);
+                    cmd.Parameters.AddWithValue("@usuario_confirma", usuario_confirma);
+                    cmd.Connection.Open();
+
+                    cmd.ExecuteNonQuery();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void delete(int id)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE TURNOS");
+                sql.AppendLine("WHERE id=@id");
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Connection.Open();
+
+                    cmd.ExecuteNonQuery();
+
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+    }
+}

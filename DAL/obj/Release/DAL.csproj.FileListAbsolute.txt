@@ -1,0 +1,16 @@
+D:\NET 2018\LH\LH\DAL\bin\Release\DAL.dll.config
+D:\NET 2018\LH\LH\DAL\bin\Release\DAL.dll
+D:\NET 2018\LH\LH\DAL\bin\Release\DAL.pdb
+D:\NET 2018\LH\LH\DAL\bin\Release\MercadoPago.dll
+D:\NET 2018\LH\LH\DAL\bin\Release\Newtonsoft.Json.dll
+D:\NET 2018\LH\LH\DAL\bin\Release\nunit.framework.dll
+D:\NET 2018\LH\LH\DAL\bin\Release\ObjectDumper.dll
+D:\NET 2018\LH\LH\DAL\bin\Release\RestSharp.dll
+D:\NET 2018\LH\LH\DAL\bin\Release\Newtonsoft.Json.xml
+D:\NET 2018\LH\LH\DAL\bin\Release\nunit.framework.pdb
+D:\NET 2018\LH\LH\DAL\bin\Release\nunit.framework.xml
+D:\NET 2018\LH\LH\DAL\bin\Release\RestSharp.xml
+D:\NET 2018\LH\LH\DAL\obj\Release\DAL.csproj.CoreCompileInputs.cache
+D:\NET 2018\LH\LH\DAL\obj\Release\DAL.csproj.CopyComplete
+D:\NET 2018\LH\LH\DAL\obj\Release\DAL.dll
+D:\NET 2018\LH\LH\DAL\obj\Release\DAL.pdb

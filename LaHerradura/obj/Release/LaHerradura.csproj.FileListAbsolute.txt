@@ -1,0 +1,4 @@
+D:\NET 2018\LH\LH\LaHerradura\obj\Release\LaHerradura.csprojAssemblyReference.cache
+D:\NET 2018\LH\LH\LaHerradura\obj\Release\LaHerradura.csproj.CoreCompileInputs.cache
+D:\NET 2018\LH\LH\LaHerradura\obj\Release\LaHerradura.dll
+D:\NET 2018\LH\LH\LaHerradura\obj\Release\LaHerradura.pdb

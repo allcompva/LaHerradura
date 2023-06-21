@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<loginTicketResponse version="1.0">
+  <header>
+    <source>CN=wsaa, O=AFIP, C=AR, SERIALNUMBER=CUIT 33693450239</source>
+    <destination>SERIALNUMBER=CUIT 30687557022, CN=la herradura</destination>
+    <uniqueId>2678205622</uniqueId>
+    <generationTime>2023-02-02T13:08:12.262-03:00</generationTime>
+    <expirationTime>2023-02-03T01:08:12.262-03:00</expirationTime>
+  </header>
+  <credentials>
+    <token>PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/Pgo8c3NvIHZlcnNpb249IjIuMCI+CiAgICA8aWQgc3JjPSJDTj13c2FhLCBPPUFGSVAsIEM9QVIsIFNFUklBTE5VTUJFUj1DVUlUIDMzNjkzNDUwMjM5IiBkc3Q9IkNOPXdzZmUsIE89QUZJUCwgQz1BUiIgdW5pcXVlX2lkPSIyNDE2MDk2OTU3IiBnZW5fdGltZT0iMTY3NTM1NDAzMiIgZXhwX3RpbWU9IjE2NzUzOTcyOTIiLz4KICAgIDxvcGVyYXRpb24gdHlwZT0ibG9naW4iIHZhbHVlPSJncmFudGVkIj4KICAgICAgICA8bG9naW4gZW50aXR5PSIzMzY5MzQ1MDIzOSIgc2VydmljZT0id3NmZSIgdWlkPSJTRVJJQUxOVU1CRVI9Q1VJVCAzMDY4NzU1NzAyMiwgQ049bGEgaGVycmFkdXJhIiBhdXRobWV0aG9kPSJjbXMiIHJlZ21ldGhvZD0iMjIiPgogICAgICAgICAgICA8cmVsYXRpb25zPgogICAgICAgICAgICAgICAgPHJlbGF0aW9uIGtleT0iMzA2ODc1NTcwMjIiIHJlbHR5cGU9IjQiLz4KICAgICAgICAgICAgPC9yZWxhdGlvbnM+CiAgICAgICAgPC9sb2dpbj4KICAgIDwvb3BlcmF0aW9uPgo8L3Nzbz4K</token>
+    <sign>VBverqrIkbiEUnGjVnPaXT0q67FDYayFdyYdVJu8T7q51w9oOlpkIwX00OG31TtGtmK1cy19ur/61Xz4ibs6NJZ+q+iwdumh/EKPhElVVHwBiNdsEoDVgV+46KjDlrnsGI6k5TBg99bIakV1MyRvB6nco4oWSJxS3aQysUnDQbE=</sign>
+  </credentials>
+</loginTicketResponse>

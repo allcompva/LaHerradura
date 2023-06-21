@@ -1,0 +1,72 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+namespace LaHerradura.Back
+{
+    public partial class CambioPass : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            try
+            {
+                divError.Visible = false;
+                divOk.Visible = false;
+                if (!IsPostBack)
+                {
+                    if (Request.QueryString["nrocta"] == null)
+                        Response.Redirect("cuentas.aspx");
+                    if (Request.QueryString["idPersona"] != null)
+                    {
+                        int idPersona = Convert.ToInt32(Request.QueryString["idPersona"]);
+                        DAL.PERSONAS obj = DAL.PERSONAS.getByPk(idPersona);
+
+                        lblPersona.InnerHtml = string.Format(
+                            "Persona: <strong>{0}, {1}</strong>", obj.APELLIDO, obj.NOMBRE);
+                        lblCuenta.InnerHtml = string.Format(
+                            "Cuenta: <strong>{0}</strong>", obj.NRO_CTA);
+                        lblCuit.InnerHtml = string.Format(
+                            "CUIT: <strong>{0}</strong>", obj.NRO_CUIT);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        protected void btnAceptar_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                DAL.PERSONAS.BlanqueoPass(
+                    Convert.ToInt32(Request.QueryString["id"]), txtPass2.Text);
+                divCambioPass.Visible = false;
+                divOk.Visible = true;
+            }
+            catch (Exception ex)
+            {
+                divError.Visible = true;
+                msgError.InnerHtml = ex.Message;
+            }
+        }
+
+        protected void btnCancelar_Click()
+        {
+            int nroCta = Convert.ToInt32(Request.QueryString["nrocta"]);
+            Response.Redirect(string.Format(
+                "inmueble.aspx?nrocta={0}", nroCta));
+        }
+
+        protected void btnCancel_Click(object sender, EventArgs e)
+        {
+            int nroCta = Convert.ToInt32(Request.QueryString["nrocta"]);
+            Response.Redirect(string.Format(
+                "inmueble.aspx?nrocta={0}", nroCta));
+        }
+    }
+}

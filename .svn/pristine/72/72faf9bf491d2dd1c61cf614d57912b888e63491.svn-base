@@ -1,0 +1,379 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class PROVEEDORES : DALBase
+    {
+        public int ID { get; set; }
+        public string CUIT { get; set; }
+        public string RAZON_SOCIAL { get; set; }
+        public string NOMBRE_FANTASIA { get; set; }
+        public string ING_BRUTOS { get; set; }
+        public int COND_IVA { get; set; }
+        public string WEB { get; set; }
+        public string MAIL { get; set; }
+        public string TEL { get; set; }
+        public int PAIS { get; set; }
+        public int PROVINCIA { get; set; }
+        public string LOCALIDAD { get; set; }
+        public string BARRIO { get; set; }
+        public string CALLE { get; set; }
+        public string NRO { get; set; }
+        public bool ACTIVO { get; set; }
+        public DateTime FECHA_ALTA { get; set; }
+        public int USUARIO_ALTA { get; set; }
+        public DateTime FECHA_BAJA { get; set; }
+        public int USUARIO_BAJA { get; set; }
+        public string CP { get; set; }
+
+        public decimal SALDO { get; set; }
+        public PROVEEDORES()
+        {
+            ID = 0;
+            CUIT = string.Empty;
+            RAZON_SOCIAL = string.Empty;
+            NOMBRE_FANTASIA = string.Empty;
+            ING_BRUTOS = string.Empty;
+            COND_IVA = 0;
+            WEB = string.Empty;
+            MAIL = string.Empty;
+            TEL = string.Empty;
+            PAIS = 0;
+            PROVINCIA = 0;
+            LOCALIDAD = string.Empty;
+            BARRIO = string.Empty;
+            CALLE = string.Empty;
+            NRO = string.Empty;
+            ACTIVO = false;
+            FECHA_ALTA = DateTime.Now;
+            USUARIO_ALTA = 0;
+            FECHA_BAJA = DateTime.Now;
+            USUARIO_BAJA = 0;
+            CP = string.Empty;
+        }
+
+        private static List<PROVEEDORES> mapeo(SqlDataReader dr)
+        {
+            List<PROVEEDORES> lst = new List<PROVEEDORES>();
+            PROVEEDORES obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new PROVEEDORES();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.CUIT = dr.GetString(1); }
+                    if (!dr.IsDBNull(2)) { obj.RAZON_SOCIAL = dr.GetString(2); }
+                    if (!dr.IsDBNull(3)) { obj.NOMBRE_FANTASIA = dr.GetString(3); }
+                    if (!dr.IsDBNull(4)) { obj.ING_BRUTOS = dr.GetString(4); }
+                    if (!dr.IsDBNull(5)) { obj.COND_IVA = dr.GetInt32(5); }
+                    if (!dr.IsDBNull(6)) { obj.WEB = dr.GetString(6); }
+                    if (!dr.IsDBNull(7)) { obj.MAIL = dr.GetString(7); }
+                    if (!dr.IsDBNull(8)) { obj.TEL = dr.GetString(8); }
+                    if (!dr.IsDBNull(9)) { obj.PAIS = dr.GetInt32(9); }
+                    if (!dr.IsDBNull(10)) { obj.PROVINCIA = dr.GetInt32(10); }
+                    if (!dr.IsDBNull(11)) { obj.LOCALIDAD = dr.GetString(11); }
+                    if (!dr.IsDBNull(12)) { obj.BARRIO = dr.GetString(12); }
+                    if (!dr.IsDBNull(13)) { obj.CALLE = dr.GetString(13); }
+                    if (!dr.IsDBNull(14)) { obj.NRO = dr.GetString(14); }
+                    if (!dr.IsDBNull(15)) { obj.ACTIVO = dr.GetBoolean(15); }
+                    if (!dr.IsDBNull(16)) { obj.FECHA_ALTA = dr.GetDateTime(16); }
+                    if (!dr.IsDBNull(17)) { obj.USUARIO_ALTA = dr.GetInt32(17); }
+                    if (!dr.IsDBNull(18)) { obj.FECHA_BAJA = dr.GetDateTime(18); }
+                    if (!dr.IsDBNull(19)) { obj.USUARIO_BAJA = dr.GetInt32(19); }
+                    if (!dr.IsDBNull(20)) { obj.CP = dr.GetString(20); }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<PROVEEDORES> read()
+        {
+            try
+            {
+                List<PROVEEDORES> lst = new List<PROVEEDORES>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT * FROM PROVEEDORES ORDER BY NOMBRE_FANTASIA";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<PROVEEDORES> readDeudas(bool conDeuda)
+        {
+            try
+            {
+                List<PROVEEDORES> lst = new List<PROVEEDORES>();
+                PROVEEDORES obj;
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT ID, CUIT, RAZON_SOCIAL, NOMBRE_FANTASIA, MAIL, TEL,");
+                sql.AppendLine("(SELECT ISNULL(SUM(SALDO),0) ");
+                sql.AppendLine("FROM CTACTE_GASTOS B WHERE A.ID = B.ID_PROVEEDOR) AS DEUDA");
+                sql.AppendLine("FROM PROVEEDORES A");
+                if (conDeuda)
+                {
+                    sql.AppendLine("WHERE (SELECT ISNULL(SUM(SALDO),0)");
+                    sql.AppendLine("FROM CTACTE_GASTOS B WHERE A.ID = B.ID_PROVEEDOR) > 0");
+                }
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    if (dr.HasRows)
+                    {
+                        while (dr.Read())
+                        {
+                            obj = new PROVEEDORES();
+                            if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                            if (!dr.IsDBNull(1)) { obj.CUIT = dr.GetString(1); }
+                            if (!dr.IsDBNull(2)) { obj.RAZON_SOCIAL = dr.GetString(2); }
+                            if (!dr.IsDBNull(3)) { obj.NOMBRE_FANTASIA = dr.GetString(3); }
+                            if (!dr.IsDBNull(4)) { obj.MAIL = dr.GetString(4); }
+                            if (!dr.IsDBNull(5)) { obj.TEL = dr.GetString(5); }
+                            if (!dr.IsDBNull(6)) { obj.SALDO = dr.GetDecimal(6); }
+                            lst.Add(obj);
+                        }
+                    }
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static PROVEEDORES getByPk(
+        int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT * FROM PROVEEDORES WHERE");
+                sql.AppendLine("ID = @ID");
+                PROVEEDORES obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<PROVEEDORES> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static PROVEEDORES getByCuit(
+                string cuit)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT * FROM PROVEEDORES WHERE");
+                sql.AppendLine("CUIT = @CUIT");
+                PROVEEDORES obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@CUIT", cuit);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<PROVEEDORES> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static int insert(PROVEEDORES obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO PROVEEDORES(");
+                sql.AppendLine("CUIT");
+                sql.AppendLine(", RAZON_SOCIAL");
+                sql.AppendLine(", NOMBRE_FANTASIA");
+                sql.AppendLine(", ING_BRUTOS");
+                sql.AppendLine(", COND_IVA");
+                sql.AppendLine(", WEB");
+                sql.AppendLine(", MAIL");
+                sql.AppendLine(", TEL");
+                sql.AppendLine(", PAIS");
+                sql.AppendLine(", PROVINCIA");
+                sql.AppendLine(", LOCALIDAD");
+                sql.AppendLine(", BARRIO");
+                sql.AppendLine(", CALLE");
+                sql.AppendLine(", NRO");
+                sql.AppendLine(", ACTIVO");
+                sql.AppendLine(", FECHA_ALTA");
+                sql.AppendLine(", USUARIO_ALTA");
+                sql.AppendLine(", CP");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@CUIT");
+                sql.AppendLine(", @RAZON_SOCIAL");
+                sql.AppendLine(", @NOMBRE_FANTASIA");
+                sql.AppendLine(", @ING_BRUTOS");
+                sql.AppendLine(", @COND_IVA");
+                sql.AppendLine(", @WEB");
+                sql.AppendLine(", @MAIL");
+                sql.AppendLine(", @TEL");
+                sql.AppendLine(", @PAIS");
+                sql.AppendLine(", @PROVINCIA");
+                sql.AppendLine(", @LOCALIDAD");
+                sql.AppendLine(", @BARRIO");
+                sql.AppendLine(", @CALLE");
+                sql.AppendLine(", @NRO");
+                sql.AppendLine(", @ACTIVO");
+                sql.AppendLine(", @FECHA_ALTA");
+                sql.AppendLine(", @USUARIO_ALTA");
+                sql.AppendLine(", @CP");
+                sql.AppendLine(")");
+                sql.AppendLine("SELECT SCOPE_IDENTITY()");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@CUIT", obj.CUIT);
+                    cmd.Parameters.AddWithValue("@RAZON_SOCIAL", obj.RAZON_SOCIAL);
+                    cmd.Parameters.AddWithValue("@NOMBRE_FANTASIA", obj.NOMBRE_FANTASIA);
+                    cmd.Parameters.AddWithValue("@ING_BRUTOS", obj.ING_BRUTOS);
+                    cmd.Parameters.AddWithValue("@COND_IVA", obj.COND_IVA);
+                    cmd.Parameters.AddWithValue("@WEB", obj.WEB);
+                    cmd.Parameters.AddWithValue("@MAIL", obj.MAIL);
+                    cmd.Parameters.AddWithValue("@TEL", obj.TEL);
+                    cmd.Parameters.AddWithValue("@PAIS", obj.PAIS);
+                    cmd.Parameters.AddWithValue("@PROVINCIA", obj.PROVINCIA);
+                    cmd.Parameters.AddWithValue("@LOCALIDAD", obj.LOCALIDAD);
+                    cmd.Parameters.AddWithValue("@BARRIO", obj.BARRIO);
+                    cmd.Parameters.AddWithValue("@CALLE", obj.CALLE);
+                    cmd.Parameters.AddWithValue("@NRO", obj.NRO);
+                    cmd.Parameters.AddWithValue("@ACTIVO", obj.ACTIVO);
+                    cmd.Parameters.AddWithValue("@FECHA_ALTA", obj.FECHA_ALTA);
+                    cmd.Parameters.AddWithValue("@USUARIO_ALTA", obj.USUARIO_ALTA);
+                    cmd.Parameters.AddWithValue("@CP", obj.CP);
+                    cmd.Connection.Open();
+                    return Convert.ToInt32(cmd.ExecuteScalar());
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(PROVEEDORES obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  PROVEEDORES SET");
+                sql.AppendLine("CUIT=@CUIT");
+                sql.AppendLine(", RAZON_SOCIAL=@RAZON_SOCIAL");
+                sql.AppendLine(", NOMBRE_FANTASIA=@NOMBRE_FANTASIA");
+                sql.AppendLine(", ING_BRUTOS=@ING_BRUTOS");
+                sql.AppendLine(", COND_IVA=@COND_IVA");
+                sql.AppendLine(", WEB=@WEB");
+                sql.AppendLine(", MAIL=@MAIL");
+                sql.AppendLine(", TEL=@TEL");
+                sql.AppendLine(", PAIS=@PAIS");
+                sql.AppendLine(", PROVINCIA=@PROVINCIA");
+                sql.AppendLine(", LOCALIDAD=@LOCALIDAD");
+                sql.AppendLine(", BARRIO=@BARRIO");
+                sql.AppendLine(", CALLE=@CALLE");
+                sql.AppendLine(", NRO=@NRO");
+                sql.AppendLine(", CP=@CP");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@CUIT", obj.CUIT);
+                    cmd.Parameters.AddWithValue("@RAZON_SOCIAL", obj.RAZON_SOCIAL);
+                    cmd.Parameters.AddWithValue("@NOMBRE_FANTASIA", obj.NOMBRE_FANTASIA);
+                    cmd.Parameters.AddWithValue("@ING_BRUTOS", obj.ING_BRUTOS);
+                    cmd.Parameters.AddWithValue("@COND_IVA", obj.COND_IVA);
+                    cmd.Parameters.AddWithValue("@WEB", obj.WEB);
+                    cmd.Parameters.AddWithValue("@MAIL", obj.MAIL);
+                    cmd.Parameters.AddWithValue("@TEL", obj.TEL);
+                    cmd.Parameters.AddWithValue("@PAIS", obj.PAIS);
+                    cmd.Parameters.AddWithValue("@PROVINCIA", obj.PROVINCIA);
+                    cmd.Parameters.AddWithValue("@LOCALIDAD", obj.LOCALIDAD);
+                    cmd.Parameters.AddWithValue("@BARRIO", obj.BARRIO);
+                    cmd.Parameters.AddWithValue("@CALLE", obj.CALLE);
+                    cmd.Parameters.AddWithValue("@NRO", obj.NRO);
+                    cmd.Parameters.AddWithValue("@CP", obj.CP);
+                    cmd.Parameters.AddWithValue("@ID", obj.ID);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(int id)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE PROVEEDORES");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", id);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+

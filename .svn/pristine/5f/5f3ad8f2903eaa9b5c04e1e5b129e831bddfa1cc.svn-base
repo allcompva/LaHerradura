@@ -1,0 +1,70 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+
+namespace LaHerradura.MP
+{
+    public partial class MPVecino : System.Web.UI.MasterPage
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            divError.Visible = false;
+
+            if(Request.Cookies["UserVecinoLh"]["Id"] == null)
+                Response.Redirect("../index.aspx");
+
+            int id = Convert.ToInt32(Request.Cookies["UserVecinoLh"]["Id"]);
+
+            DAL.PERSONAS obj = DAL.PERSONAS.getByPk(id);
+
+            lblUsuario.InnerHtml = string.Format("{0} {1}",
+                obj.NOMBRE, obj.APELLIDO);
+            lblUsuario2.InnerHtml = string.Format("{0} {1}",
+                obj.NOMBRE, obj.APELLIDO);
+        }
+
+        protected void btnSalr_ServerClick(object sender, EventArgs e)
+        {
+            try
+            {
+                Response.Cookies["UserVecinoLh"].Expires = LaHerradura.Utils.Utils.getFechaActual().AddDays(-1d);
+                Response.Redirect("../index.aspx");
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
+        protected void btnCambioPass_Click(object sender, EventArgs e)
+        {
+            int id = Convert.ToInt32(Request.Cookies["UserVecinoLh"]["Id"]);
+
+            DAL.PERSONAS obj = DAL.PERSONAS.getByPk(id);
+            DAL.PERSONAS obj2 = DAL.PERSONAS.validUser(obj.NRO_CUIT, txtOldPass.Text);
+            if (obj2 != null)
+            {
+                this.Response.Cookies.Add(new HttpCookie("UserVecinoLh")
+                {
+                    ["Id"] = obj.ID.ToString(),
+                    Expires = LaHerradura.Utils.Utils.getFechaActual().AddDays(1.0)
+                });
+                DAL.PERSONAS.cambioPass(txtOldPass.Text, txtNewPass2.Text,
+                    obj.ID);
+                Response.Redirect("../index.aspx");
+            }
+            else
+            {
+                divError.Visible = true;
+                msgError.InnerHtml = "clave anterior invalida";
+            }
+        }
+    }
+
+    /*
+                
+     */
+}

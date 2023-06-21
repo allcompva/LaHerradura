@@ -1,0 +1,566 @@
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+namespace DAL
+{
+    public class DETALLE_DEUDA : DALBase
+    {
+        public int ID { get; set; }
+        public int NRO_CTA { get; set; }
+        public int ID_CONCEPTO { get; set; }
+        public int PERIODO { get; set; }
+        public DateTime FECHA { get; set; }
+        public string OBS { get; set; }
+        public decimal CANT { get; set; }
+        public decimal COSTO { get; set; }
+        public decimal SUBTOTAL { get; set; }
+        public bool MASIVO { get; set; }
+        public DateTime FECHA_CARGA { get; set; }
+        public int USUARIO_CARGA { get; set; }
+        public int NRO_ORDEN { get; set; }
+        public decimal DEBE { get; set; }
+        public decimal HABER { get; set; }
+        public decimal SALDO { get; set; }
+        public decimal MONTO_ORIGINAL { get; set; }
+        public int NRO_PLAN_PAGO { get; set; }
+        public int NRO_CUOTA { get; set; }
+        public int ID_CTA { get; set; }
+        public int ID_PLAN_CUENTA { get; set; }
+        public decimal DESC_VENCIMIENTO { get; set; }
+        public string DESC_CONCEPTO { get; set; }
+
+        public DETALLE_DEUDA()
+        {
+            ID = 0;
+            NRO_CTA = 0;
+            ID_CONCEPTO = 0;
+            PERIODO = 0;
+            FECHA = DateTime.Now;
+            OBS = string.Empty;
+            CANT = 0;
+            COSTO = 0;
+            SUBTOTAL = 0;
+            MASIVO = false;
+            FECHA_CARGA = DateTime.Now;
+            USUARIO_CARGA = 0;
+            NRO_ORDEN = 0;
+            DEBE = 0;
+            HABER = 0;
+            SALDO = 0;
+            MONTO_ORIGINAL = 0;
+            DESC_CONCEPTO = string.Empty;
+            NRO_PLAN_PAGO = 0;
+            NRO_CUOTA = 0;
+            ID_PLAN_CUENTA = 0;
+            DESC_VENCIMIENTO = 0;
+        }
+
+        private static List<DETALLE_DEUDA> mapeo(SqlDataReader dr)
+        {
+            List<DETALLE_DEUDA> lst = new List<DETALLE_DEUDA>();
+            DETALLE_DEUDA obj;
+            if (dr.HasRows)
+            {
+                while (dr.Read())
+                {
+                    obj = new DETALLE_DEUDA();
+                    if (!dr.IsDBNull(0)) { obj.ID = dr.GetInt32(0); }
+                    if (!dr.IsDBNull(1)) { obj.NRO_CTA = dr.GetInt32(1); }
+                    if (!dr.IsDBNull(2)) { obj.ID_CONCEPTO = dr.GetInt32(2); }
+                    if (!dr.IsDBNull(3)) { obj.PERIODO = dr.GetInt32(3); }
+                    if (!dr.IsDBNull(4)) { obj.FECHA = dr.GetDateTime(4); }
+                    if (!dr.IsDBNull(5)) { obj.OBS = dr.GetString(5); }
+                    if (!dr.IsDBNull(6)) { obj.CANT = dr.GetDecimal(6); }
+                    if (!dr.IsDBNull(7)) { obj.COSTO = dr.GetDecimal(7); }
+                    if (!dr.IsDBNull(8)) { obj.SUBTOTAL = dr.GetDecimal(8); }
+                    if (!dr.IsDBNull(9)) { obj.MASIVO = dr.GetBoolean(9); }
+                    if (!dr.IsDBNull(10)) { obj.FECHA_CARGA = dr.GetDateTime(10); }
+                    if (!dr.IsDBNull(11)) { obj.USUARIO_CARGA = dr.GetInt32(11); }
+                    if (!dr.IsDBNull(12)) { obj.NRO_ORDEN = dr.GetInt32(12); }
+                    if (!dr.IsDBNull(13)) { obj.DEBE = dr.GetDecimal(13); }
+                    if (!dr.IsDBNull(14)) { obj.HABER = dr.GetDecimal(14); }
+                    if (!dr.IsDBNull(15)) { obj.SALDO = dr.GetDecimal(15); }
+                    if (!dr.IsDBNull(16)) { obj.MONTO_ORIGINAL = dr.GetDecimal(16); }
+                    if (!dr.IsDBNull(17)) { obj.NRO_PLAN_PAGO = dr.GetInt32(17); }
+                    if (!dr.IsDBNull(18)) { obj.NRO_CUOTA = dr.GetInt32(18); }
+                    if (!dr.IsDBNull(19)) { obj.ID_CTA = dr.GetInt32(19); }
+                    if (!dr.IsDBNull(20)) { obj.ID_PLAN_CUENTA = dr.GetInt32(20); }
+                    if (!dr.IsDBNull(21)) { obj.DESC_VENCIMIENTO = dr.GetDecimal(21); }
+                    if (!dr.IsDBNull(22)) { obj.DESC_CONCEPTO = dr.GetString(22); }
+
+                    if (obj.ID_CONCEPTO == 1)
+                    {
+                        switch (obj.PERIODO.ToString().Substring(4, 2))
+                        {
+                            case "01":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA ENERO " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "02":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA FEBRERO " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "03":
+                                obj.DESC_CONCEPTO = "EXPENSA MARZO " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "04":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA ABRIL " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "05":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA MAYO " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "06":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA JUNIO " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "07":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA JULIO " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "08":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA AGOSTO " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "09":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA SEPTIEMBRE " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "10":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA OCTUBRE " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "11":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA NOVIEMBRE " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            case "12":
+                                obj.DESC_CONCEPTO = "EXPENSA ORDINARIA DICIEMBRE " +
+                                    obj.PERIODO.ToString().Substring(0, 4);
+                                break;
+                            default:
+                                break;
+                        }
+
+                    }
+                    if (obj.ID_CONCEPTO == 18)
+                    {
+                        obj.DESC_CONCEPTO = string.Format("PLAN PAGO {0} - CUOTA: {1}",
+                                    obj.NRO_PLAN_PAGO, obj.NRO_CUOTA);
+                    }
+                    lst.Add(obj);
+                }
+            }
+            return lst;
+        }
+
+        public static List<DETALLE_DEUDA> read(int periodo, int nrocta)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT A.*, B.DESCRIPCION");
+                sql.AppendLine("FROM DETALLE_DEUDA A");
+                sql.AppendLine("INNER JOIN CONCEPTOS_EXPENSA B");
+                sql.AppendLine("ON A.ID_CONCEPTO=B.ID");
+                sql.AppendLine("WHERE PERIODO=@PERIODO AND NRO_CTA=@NRO_CTA AND NRO_PLAN_PAGO IS NULL");
+                List<DETALLE_DEUDA> lst = new List<DETALLE_DEUDA>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", nrocta);
+                    cmd.Parameters.AddWithValue("@PERIODO", periodo);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<DETALLE_DEUDA> readAsiento(int periodo, int nrocta)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT A.NRO_CTA, ID_CONCEPTO, B.ID_PLAN_CUENTA,");
+                sql.AppendLine("SUM(SUBTOTAL) as MONTO");
+                sql.AppendLine("FROM DETALLE_DEUDA A");
+                sql.AppendLine("INNER JOIN CONCEPTOS_EXPENSA B ");
+                sql.AppendLine("ON A.ID_CONCEPTO=B.ID");
+                sql.AppendLine("WHERE PERIODO=@PERIODO AND NRO_CTA=@NRO_CTA AND NRO_PLAN_PAGO IS NULL");
+                sql.AppendLine("GROUP BY A.NRO_CTA, A.ID_CONCEPTO, B.ID_PLAN_CUENTA");
+
+                List<DETALLE_DEUDA> lst = new List<DETALLE_DEUDA>();
+                DAL.DETALLE_DEUDA obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", nrocta);
+                    cmd.Parameters.AddWithValue("@PERIODO", periodo);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    if (dr.HasRows)
+                    {
+                        while (dr.Read())
+                        {
+                            obj = new DETALLE_DEUDA();
+                            if (!dr.IsDBNull(0)) { obj.NRO_CTA = dr.GetInt32(0); }
+                            if (!dr.IsDBNull(1)) { obj.ID_CONCEPTO = dr.GetInt32(1); }
+                            if (!dr.IsDBNull(2)) { obj.ID_PLAN_CUENTA = dr.GetInt32(2); }
+                            if (!dr.IsDBNull(3)) { obj.SUBTOTAL = dr.GetDecimal(3); }
+                            lst.Add(obj);
+                        }
+                    }
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<DETALLE_DEUDA> readPlan(int periodo, int nrocta, int nroPlan, int nroCuota)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT A.*, B.DESCRIPCION ");
+                sql.AppendLine("FROM DETALLE_DEUDA A");
+                sql.AppendLine("INNER JOIN CONCEPTOS_EXPENSA B ON A.ID_CONCEPTO=B.ID");
+                sql.AppendLine("WHERE PERIODO=@PERIODO AND NRO_CTA=@NRO_CTA");
+                sql.AppendLine("AND NRO_PLAN_PAGO=@NRO_PLAN_PAGO AND NRO_CUOTA=@NRO_CUOTA");
+
+                List<DETALLE_DEUDA> lst = new List<DETALLE_DEUDA>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", nrocta);
+                    cmd.Parameters.AddWithValue("@PERIODO", periodo);
+                    cmd.Parameters.AddWithValue("@NRO_PLAN_PAGO", nroPlan);
+                    cmd.Parameters.AddWithValue("@NRO_CUOTA", nroCuota);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static DETALLE_DEUDA getByPk(
+        int ID)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT A.*, B.DESCRIPCION FROM DETALLE_DEUDA A ");
+                sql.AppendLine("INNER JOIN CONCEPTOS_EXPENSA B ON A.ID_CONCEPTO=B.ID WHERE ID = @ID");
+                DETALLE_DEUDA obj = null;
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID", ID);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    List<DETALLE_DEUDA> lst = mapeo(dr);
+                    if (lst.Count != 0)
+                        obj = lst[0];
+                }
+                return obj;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static List<DETALLE_DEUDA> getByIdCta(
+                int ID_CTA)
+        {
+            try
+            {
+                List<DETALLE_DEUDA> lst = new List<DETALLE_DEUDA>();
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("SELECT A.*, B.DESCRIPCION");
+                sql.AppendLine("FROM DETALLE_DEUDA A");
+                sql.AppendLine("INNER JOIN CONCEPTOS_EXPENSA B");
+                sql.AppendLine("ON A.ID_CONCEPTO=B.ID");
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@ID_CTA", ID_CTA);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                }
+                return lst;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        public static void insert(DETALLE_DEUDA obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO DETALLE_DEUDA(");
+                sql.AppendLine("NRO_CTA");
+                sql.AppendLine(", ID_CONCEPTO");
+                sql.AppendLine(", PERIODO");
+                sql.AppendLine(", FECHA");
+                sql.AppendLine(", OBS");
+                sql.AppendLine(", CANT");
+                sql.AppendLine(", COSTO");
+                sql.AppendLine(", SUBTOTAL");
+                sql.AppendLine(", MASIVO");
+                sql.AppendLine(", FECHA_CARGA");
+                sql.AppendLine(", USUARIO_CARGA");
+                sql.AppendLine(", NRO_ORDEN");
+                sql.AppendLine(", DEBE");
+                sql.AppendLine(", HABER");
+                sql.AppendLine(", SALDO");
+                sql.AppendLine(", MONTO_ORIGINAL");
+                sql.AppendLine(", ID_CTA");
+                sql.AppendLine(", ID_PLAN_CUENTA");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@NRO_CTA");
+                sql.AppendLine(", @ID_CONCEPTO");
+                sql.AppendLine(", @PERIODO");
+                sql.AppendLine(", @FECHA");
+                sql.AppendLine(", @OBS");
+                sql.AppendLine(", @CANT");
+                sql.AppendLine(", @COSTO");
+                sql.AppendLine(", @SUBTOTAL");
+                sql.AppendLine(", @MASIVO");
+                sql.AppendLine(", @FECHA_CARGA");
+                sql.AppendLine(", @USUARIO_CARGA");
+                sql.AppendLine(", @NRO_ORDEN");
+                sql.AppendLine(", @DEBE");
+                sql.AppendLine(", @HABER");
+                sql.AppendLine(", @SALDO");
+                sql.AppendLine(", @MONTO_ORIGINAL");
+                sql.AppendLine(", @ID_CTA");
+                sql.AppendLine(", @ID_PLAN_CUENTA");
+                sql.AppendLine(")");
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", obj.NRO_CTA);
+                    cmd.Parameters.AddWithValue("@ID_CONCEPTO", obj.ID_CONCEPTO);
+                    cmd.Parameters.AddWithValue("@PERIODO", obj.PERIODO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@OBS", obj.OBS);
+                    cmd.Parameters.AddWithValue("@CANT", obj.CANT);
+                    cmd.Parameters.AddWithValue("@COSTO", obj.COSTO);
+                    cmd.Parameters.AddWithValue("@SUBTOTAL", obj.SUBTOTAL);
+                    cmd.Parameters.AddWithValue("@MASIVO", obj.MASIVO);
+                    cmd.Parameters.AddWithValue("@FECHA_CARGA", obj.FECHA_CARGA);
+                    cmd.Parameters.AddWithValue("@USUARIO_CARGA", obj.USUARIO_CARGA);
+                    cmd.Parameters.AddWithValue("@NRO_ORDEN", obj.NRO_ORDEN);
+                    cmd.Parameters.AddWithValue("@DEBE", obj.DEBE);
+                    cmd.Parameters.AddWithValue("@HABER", obj.HABER);
+                    cmd.Parameters.AddWithValue("@SALDO", obj.SALDO);
+                    cmd.Parameters.AddWithValue("@MONTO_ORIGINAL", obj.MONTO_ORIGINAL);
+                    cmd.Parameters.AddWithValue("@ID_CTA", obj.ID_CTA);
+                    cmd.Parameters.AddWithValue("@ID_PLAN_CUENTA", obj.ID_PLAN_CUENTA);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void insertPlan(DETALLE_DEUDA obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("INSERT INTO DETALLE_DEUDA(");
+                sql.AppendLine("NRO_CTA");
+                sql.AppendLine(", ID_CONCEPTO");
+                sql.AppendLine(", PERIODO");
+                sql.AppendLine(", FECHA");
+                sql.AppendLine(", OBS");
+                sql.AppendLine(", CANT");
+                sql.AppendLine(", COSTO");
+                sql.AppendLine(", SUBTOTAL");
+                sql.AppendLine(", MASIVO");
+                sql.AppendLine(", FECHA_CARGA");
+                sql.AppendLine(", USUARIO_CARGA");
+                sql.AppendLine(", NRO_ORDEN");
+                sql.AppendLine(", DEBE");
+                sql.AppendLine(", HABER");
+                sql.AppendLine(", SALDO");
+                sql.AppendLine(", MONTO_ORIGINAL");
+                sql.AppendLine(", NRO_PLAN_PAGO");
+                sql.AppendLine(", NRO_CUOTA");
+                sql.AppendLine(")");
+                sql.AppendLine("VALUES");
+                sql.AppendLine("(");
+                sql.AppendLine("@NRO_CTA");
+                sql.AppendLine(", @ID_CONCEPTO");
+                sql.AppendLine(", @PERIODO");
+                sql.AppendLine(", @FECHA");
+                sql.AppendLine(", @OBS");
+                sql.AppendLine(", @CANT");
+                sql.AppendLine(", @COSTO");
+                sql.AppendLine(", @SUBTOTAL");
+                sql.AppendLine(", @MASIVO");
+                sql.AppendLine(", @FECHA_CARGA");
+                sql.AppendLine(", @USUARIO_CARGA");
+                sql.AppendLine(", @NRO_ORDEN");
+                sql.AppendLine(", @DEBE");
+                sql.AppendLine(", @HABER");
+                sql.AppendLine(", @SALDO");
+                sql.AppendLine(", @MONTO_ORIGINAL");
+                sql.AppendLine(", @NRO_PLAN_PAGO");
+                sql.AppendLine(", @NRO_CUOTA");
+                sql.AppendLine(")");
+
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", obj.NRO_CTA);
+                    cmd.Parameters.AddWithValue("@ID_CONCEPTO", obj.ID_CONCEPTO);
+                    cmd.Parameters.AddWithValue("@PERIODO", obj.PERIODO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@OBS", obj.OBS);
+                    cmd.Parameters.AddWithValue("@CANT", obj.CANT);
+                    cmd.Parameters.AddWithValue("@COSTO", obj.COSTO);
+                    cmd.Parameters.AddWithValue("@SUBTOTAL", obj.SUBTOTAL);
+                    cmd.Parameters.AddWithValue("@MASIVO", obj.MASIVO);
+                    cmd.Parameters.AddWithValue("@FECHA_CARGA", obj.FECHA_CARGA);
+                    cmd.Parameters.AddWithValue("@USUARIO_CARGA", obj.USUARIO_CARGA);
+                    cmd.Parameters.AddWithValue("@NRO_ORDEN", obj.NRO_ORDEN);
+                    cmd.Parameters.AddWithValue("@DEBE", obj.DEBE);
+                    cmd.Parameters.AddWithValue("@HABER", obj.HABER);
+                    cmd.Parameters.AddWithValue("@SALDO", obj.SALDO);
+                    cmd.Parameters.AddWithValue("@MONTO_ORIGINAL", obj.MONTO_ORIGINAL);
+                    cmd.Parameters.AddWithValue("@NRO_PLAN_PAGO", obj.NRO_PLAN_PAGO);
+                    cmd.Parameters.AddWithValue("@NRO_CUOTA", obj.NRO_CUOTA);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void update(DETALLE_DEUDA obj)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("UPDATE  DETALLE_DEUDA SET");
+                sql.AppendLine("NRO_CTA=@NRO_CTA");
+                sql.AppendLine(", ID_CONCEPTO=@ID_CONCEPTO");
+                sql.AppendLine(", PERIODO=@PERIODO");
+                sql.AppendLine(", FECHA=@FECHA");
+                sql.AppendLine(", OBS=@OBS");
+                sql.AppendLine(", CANT=@CANT");
+                sql.AppendLine(", COSTO=@COSTO");
+                sql.AppendLine(", SUBTOTAL=@SUBTOTAL");
+                sql.AppendLine(", MASIVO=@MASIVO");
+                sql.AppendLine(", FECHA_CARGA=@FECHA_CARGA");
+                sql.AppendLine(", USUARIO_CARGA=@USUARIO_CARGA");
+                sql.AppendLine(", NRO_ORDEN=@NRO_ORDEN");
+                sql.AppendLine(", DEBE=@DEBE");
+                sql.AppendLine(", HABER=@HABER");
+                sql.AppendLine(", SALDO=@SALDO");
+                sql.AppendLine(", MONTO_ORIGINAL=@MONTO_ORIGINAL");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("ID=@ID");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@NRO_CTA", obj.NRO_CTA);
+                    cmd.Parameters.AddWithValue("@ID_CONCEPTO", obj.ID_CONCEPTO);
+                    cmd.Parameters.AddWithValue("@PERIODO", obj.PERIODO);
+                    cmd.Parameters.AddWithValue("@FECHA", obj.FECHA);
+                    cmd.Parameters.AddWithValue("@OBS", obj.OBS);
+                    cmd.Parameters.AddWithValue("@CANT", obj.CANT);
+                    cmd.Parameters.AddWithValue("@COSTO", obj.COSTO);
+                    cmd.Parameters.AddWithValue("@SUBTOTAL", obj.SUBTOTAL);
+                    cmd.Parameters.AddWithValue("@MASIVO", obj.MASIVO);
+                    cmd.Parameters.AddWithValue("@FECHA_CARGA", obj.FECHA_CARGA);
+                    cmd.Parameters.AddWithValue("@USUARIO_CARGA", obj.USUARIO_CARGA);
+                    cmd.Parameters.AddWithValue("@NRO_ORDEN", obj.NRO_ORDEN);
+                    cmd.Parameters.AddWithValue("@DEBE", obj.DEBE);
+                    cmd.Parameters.AddWithValue("@HABER", obj.HABER);
+                    cmd.Parameters.AddWithValue("@SALDO", obj.SALDO);
+                    cmd.Parameters.AddWithValue("@MONTO_ORIGINAL", obj.MONTO_ORIGINAL);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static void delete(int periodo)
+        {
+            try
+            {
+                StringBuilder sql = new StringBuilder();
+                sql.AppendLine("DELETE  DETALLE_DEUDA");
+                sql.AppendLine("WHERE");
+                sql.AppendLine("PERIODO=@PERIODO AND ID_CONCEPTO <> 18");
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = sql.ToString();
+                    cmd.Parameters.AddWithValue("@PERIODO", periodo);
+                    cmd.Connection.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    }
+}
+
