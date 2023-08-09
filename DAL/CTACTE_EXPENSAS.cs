@@ -1623,7 +1623,7 @@ ORDER BY FECHA DESC
                 sql.AppendLine("A.NRO_CTA = B.NRO_CTA AND B.RESPONSABLE_FACTURACION = 1");
                 sql.AppendLine("FULL JOIN PERSONAS C ON B.ID_PERSONA = C.ID");
                 sql.AppendLine("FULL JOIN LIQUIDACION_EXPENSAS D ON D.PERIODO = A.PERIODO");
-                sql.AppendLine("WHERE NRO_RECIBO_PAYPERTIC=@NRO_RECIBO_PAYPERTIC AND TIPO_MOVIMIENTO = 1");
+                sql.AppendLine("WHERE NRO_RECIBO_PAYPERTIC=@NRO_RECIBO_PAYPERTIC AND TIPO_MOVIMIENTO IN(1,3)");
                 sql.AppendLine("ORDER BY NRO_CTA, PERIODO, TIPO_MOVIMIENTO");
 
                 List<CTACTE_EXPENSAS> lst = new List<CTACTE_EXPENSAS>();
