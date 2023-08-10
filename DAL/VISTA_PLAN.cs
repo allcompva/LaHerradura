@@ -87,8 +87,52 @@ namespace DAL
                 {
                     SqlCommand cmd = con.CreateCommand();
                     cmd.CommandType = CommandType.Text;
-                    cmd.CommandText = "SELECT *FROM VISTA_PLAN WHERE ESTADO=@ESTADO";
+                    cmd.CommandText = "SELECT * FROM VISTA_PLAN WHERE ESTADO = @ESTADO";
                     cmd.Parameters.AddWithValue("@ESTADO", estado);
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static List<VISTA_PLAN> read_PendientePago()
+        {
+            try
+            {
+                List<VISTA_PLAN> lst = new List<VISTA_PLAN>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT * FROM VISTA_PLAN WHERE (SALDO - MONTO_PAGADO) > 1";
+                    cmd.Connection.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    lst = mapeo(dr);
+                    return lst;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public static List<VISTA_PLAN> read_FinalizadoPago()
+        {
+            try
+            {
+                List<VISTA_PLAN> lst = new List<VISTA_PLAN>();
+                using (SqlConnection con = GetConnection())
+                {
+                    SqlCommand cmd = con.CreateCommand();
+                    cmd.CommandType = CommandType.Text;
+                    cmd.CommandText = "SELECT * FROM VISTA_PLAN WHERE (SALDO - MONTO_PAGADO) < 1";
                     cmd.Connection.Open();
                     SqlDataReader dr = cmd.ExecuteReader();
                     lst = mapeo(dr);

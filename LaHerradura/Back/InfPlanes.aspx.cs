@@ -15,7 +15,7 @@ namespace LaHerradura.Back
             {
                 if (!IsPostBack)
                 {
-                    List<DAL.VISTA_PLAN> lstActivos = DAL.VISTA_PLAN.read(0);
+                    List<DAL.VISTA_PLAN> lstActivos = DAL.VISTA_PLAN.read_PendientePago();
                     gvPlanesActivos.DataSource = lstActivos;
                     gvPlanesActivos.DataBind();
 
@@ -24,7 +24,7 @@ namespace LaHerradura.Back
                         gvPlanesActivos.UseAccessibleHeader = true;
                         gvPlanesActivos.HeaderRow.TableSection = TableRowSection.TableHeader;
                     }
-                    List<DAL.VISTA_PLAN> lstFinalizados = DAL.VISTA_PLAN.read(1);
+                    List<DAL.VISTA_PLAN> lstFinalizados = DAL.VISTA_PLAN.read_FinalizadoPago();
                     gvPlanesFinalizados.DataSource = lstFinalizados;
                     gvPlanesFinalizados.DataBind();
 
